@@ -76,10 +76,21 @@
     font-weight: 500;
   }
 
+  #%%AQK_INSTANCE%% .aqk-board-viewport {
+    border-radius: 14px;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    padding: 2px 2px 10px;
+    scrollbar-gutter: stable;
+  }
+
   #%%AQK_INSTANCE%% .aqk-board {
     display: grid;
-    gap: 12px;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    grid-template-columns: repeat(6, minmax(210px, 1fr));
+    min-width: 1310px;
     width: 100%;
   }
 
@@ -87,8 +98,12 @@
     background: color-mix(in srgb, var(--muted) 54%, transparent);
     border: 1px solid var(--border);
     border-radius: 14px;
-    min-width: 0;
-    padding: 10px;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 380px;
+    min-width: 210px;
+    overflow: hidden;
+    padding: 9px;
   }
 
   #%%AQK_INSTANCE%% .aqk-column-head {
@@ -108,8 +123,17 @@
   }
 
   #%%AQK_INSTANCE%% .aqk-card-list {
+    align-content: start;
     display: grid;
-    gap: 8px;
+    gap: 7px;
+    min-height: 0;
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-x: auto;
+    overscroll-behavior-y: contain;
+    padding: 2px 4px 6px 2px;
+    scrollbar-gutter: stable;
   }
 
   #%%AQK_INSTANCE%% .aqk-card {
@@ -117,11 +141,13 @@
     background: var(--card);
     border: 1px solid var(--border);
     border-left: 4px solid var(--muted-foreground);
-    border-radius: 12px;
+    border-radius: 10px;
     color: var(--card-foreground);
     cursor: pointer;
     font: inherit;
-    padding: 12px;
+    max-width: 100%;
+    min-width: 0;
+    padding: 9px 10px;
     text-align: left;
     width: 100%;
   }
@@ -133,7 +159,7 @@
     outline-offset: 2px;
   }
 
-  #%%AQK_INSTANCE%% .aqk-card[aria-pressed="true"] {
+  #%%AQK_INSTANCE%% .aqk-card[aria-expanded="true"] {
     border-color: var(--primary);
     outline: 2px solid color-mix(in srgb, var(--primary) 35%, transparent);
     outline-offset: 1px;
@@ -157,25 +183,37 @@
   }
 
   #%%AQK_INSTANCE%% .aqk-card-id,
-  #%%AQK_INSTANCE%% .aqk-card-summary,
   #%%AQK_INSTANCE%% .aqk-empty,
   #%%AQK_INSTANCE%% .aqk-detail-label {
     color: var(--muted-foreground);
   }
 
-  #%%AQK_INSTANCE%% .aqk-card-id,
-  #%%AQK_INSTANCE%% .aqk-card-summary {
+  #%%AQK_INSTANCE%% .aqk-card-id {
+    font-size: 0.82em;
     margin: 0;
   }
 
   #%%AQK_INSTANCE%% .aqk-card-title,
-  #%%AQK_INSTANCE%% .aqk-card-summary,
   #%%AQK_INSTANCE%% .aqk-card-meta {
-    margin-top: 8px;
+    margin-top: 5px;
   }
 
-  #%%AQK_INSTANCE%% .aqk-card-summary {
+  #%%AQK_INSTANCE%% .aqk-card-title {
+    display: -webkit-box;
+    line-height: 1.35;
+    overflow: hidden;
     overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  #%%AQK_INSTANCE%% .aqk-card-meta {
+    gap: 5px;
+  }
+
+  #%%AQK_INSTANCE%% .aqk-card-meta .aqk-chip {
+    font-size: 0.76em;
+    padding: 2px 6px;
   }
 
   #%%AQK_INSTANCE%% .aqk-empty {
@@ -184,11 +222,27 @@
     text-align: center;
   }
 
-  #%%AQK_INSTANCE%% .aqk-detail {
-    border-top: 1px solid var(--border);
+  #%%AQK_INSTANCE%% .aqk-dialog {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    color: var(--foreground);
+    margin: auto;
+    max-height: calc(100% - 32px);
+    max-width: 920px;
+    overflow: hidden;
+    padding: 0;
+    width: calc(100% - 32px);
+  }
+
+  #%%AQK_INSTANCE%% .aqk-dialog::backdrop {
+    background: color-mix(in srgb, var(--background) 66%, transparent);
+  }
+
+  #%%AQK_INSTANCE%% .aqk-dialog-panel {
     display: grid;
-    gap: 12px;
-    padding-top: 16px;
+    grid-template-rows: auto minmax(0, 1fr);
+    max-height: 680px;
   }
 
   #%%AQK_INSTANCE%% .aqk-detail-head {
@@ -196,6 +250,7 @@
     display: flex;
     gap: 12px;
     justify-content: space-between;
+    padding: 14px 16px;
   }
 
   #%%AQK_INSTANCE%% .aqk-detail-heading {
@@ -208,6 +263,11 @@
     display: grid;
     gap: 10px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: 560px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0 16px 16px;
+    scrollbar-gutter: stable;
   }
 
   #%%AQK_INSTANCE%% .aqk-detail-block {
@@ -233,20 +293,39 @@
     padding-left: 18px;
   }
 
-  #%%AQK_INSTANCE%% .aqk-follow-up {
+  #%%AQK_INSTANCE%% .aqk-dialog-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  #%%AQK_INSTANCE%% .aqk-follow-up,
+  #%%AQK_INSTANCE%% .aqk-dialog-close {
     appearance: none;
-    background: var(--primary);
-    border: 1px solid var(--primary);
     border-radius: 10px;
-    color: var(--primary-foreground);
     cursor: pointer;
-    display: none;
     font: inherit;
     font-weight: 500;
     padding: 9px 12px;
   }
 
-  #%%AQK_INSTANCE%% .aqk-follow-up:focus-visible {
+  #%%AQK_INSTANCE%% .aqk-follow-up {
+    background: var(--primary);
+    border: 1px solid var(--primary);
+    color: var(--primary-foreground);
+    display: none;
+  }
+
+  #%%AQK_INSTANCE%% .aqk-dialog-close {
+    background: var(--secondary);
+    border: 1px solid var(--border);
+    color: var(--secondary-foreground);
+  }
+
+  #%%AQK_INSTANCE%% .aqk-follow-up:focus-visible,
+  #%%AQK_INSTANCE%% .aqk-dialog-close:focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
@@ -256,7 +335,6 @@
   }
 
   @media (max-width: 620px) {
-    #%%AQK_INSTANCE%% .aqk-board,
     #%%AQK_INSTANCE%% .aqk-detail-grid {
       grid-template-columns: 1fr;
     }
@@ -269,6 +347,10 @@
 
     #%%AQK_INSTANCE%% .aqk-badges {
       justify-content: flex-start;
+    }
+
+    #%%AQK_INSTANCE%% .aqk-column {
+      height: 340px;
     }
   }
 </style>
@@ -318,8 +400,10 @@
           active: "진행",
           done: "완료",
           blocked: "차단",
-          selectCard: "카드를 선택해",
+          boardRegion: "상태별 QA 카드. 좌우로 스크롤할 수 있어",
+          selectCard: "카드 상세",
           continueCard: "이 카드 계속 진행",
+          closeDetails: "상세 닫기",
           none: "기록 없음",
           noCards: "카드 없음",
           summary: "요약",
@@ -351,8 +435,10 @@
           active: "Active",
           done: "Done",
           blocked: "Blocked",
-          selectCard: "Select a card",
+          boardRegion: "QA cards by status. Horizontally scrollable.",
+          selectCard: "Card details",
           continueCard: "Continue this card",
+          closeDetails: "Close details",
           none: "None recorded.",
           noCards: "No cards",
           summary: "Summary",
@@ -429,21 +515,68 @@
       statusStrip.append(item);
     });
 
+    const boardViewport = element("div", "aqk-board-viewport");
+    boardViewport.tabIndex = 0;
+    boardViewport.setAttribute("role", "region");
+    boardViewport.setAttribute("aria-label", copy.boardRegion);
     const boardGrid = element("div", "aqk-board");
-    const detail = element("section", "aqk-detail");
-    detail.setAttribute("aria-live", "polite");
+    boardViewport.append(boardGrid);
+
+    // 열 내부는 세로 전용으로 유지하고 좌우 wheel 의도만 바깥 board scrollLeft로 보낸다.
+    const getHorizontalWheelDelta = (event) => {
+      const horizontalIntent =
+        event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY);
+      if (!horizontalIntent) return 0;
+      const rawDelta =
+        event.shiftKey && Math.abs(event.deltaY) >= Math.abs(event.deltaX)
+          ? event.deltaY
+          : event.deltaX;
+      let unit = 1;
+      if (event.deltaMode === 1) unit = 16;
+      if (event.deltaMode === 2) unit = boardViewport.clientWidth;
+      return rawDelta * unit;
+    };
+
+    // 카드·빈 영역·열 헤더 어느 곳에서 시작해도 좌우 제스처는 board만 움직인다.
+    boardViewport.addEventListener(
+      "wheel",
+      (event) => {
+        const horizontalDelta = getHorizontalWheelDelta(event);
+        if (horizontalDelta === 0) return;
+        event.preventDefault();
+        boardViewport.scrollLeft += horizontalDelta;
+      },
+      { passive: false },
+    );
+
+    const detailDialog = element("dialog", "aqk-dialog");
+    detailDialog.id = `${root.id}-card-dialog`;
+    detailDialog.setAttribute("aria-modal", "true");
+    const detailPanel = element("div", "aqk-dialog-panel");
     const detailHead = element("div", "aqk-detail-head");
     const detailHeading = element("div", "aqk-detail-heading");
     const detailTitle = element("h3", "aqk-detail-title", copy.selectCard);
+    detailTitle.id = `${root.id}-card-dialog-title`;
+    detailDialog.setAttribute("aria-labelledby", detailTitle.id);
     const detailMeta = element("div", "aqk-detail-meta");
     detailHeading.append(detailTitle, detailMeta);
+    const dialogActions = element("div", "aqk-dialog-actions");
     const followUp = element("button", "aqk-follow-up", copy.continueCard);
     followUp.type = "button";
-    detailHead.append(detailHeading, followUp);
+    const closeDetails = element(
+      "button",
+      "aqk-dialog-close",
+      copy.closeDetails,
+    );
+    closeDetails.type = "button";
+    dialogActions.append(followUp, closeDetails);
+    detailHead.append(detailHeading, dialogActions);
     const detailGrid = element("div", "aqk-detail-grid");
-    detail.append(detailHead, detailGrid);
+    detailPanel.append(detailHead, detailGrid);
+    detailDialog.append(detailPanel);
 
     let selectedCard = null;
+    let activeCardButton = null;
     const cardButtons = [];
 
     const createDetailBlock = (label, content, listItems) => {
@@ -465,13 +598,47 @@
       return block;
     };
 
-    const selectCard = (card, button) => {
-      selectedCard = card;
+    // 모달이 닫히면 presentation-only 선택 상태를 비우고 원래 카드로 초점을 돌린다.
+    const restoreCardFocus = () => {
+      const trigger = activeCardButton;
       cardButtons.forEach((item) =>
-        item.setAttribute("aria-pressed", String(item === button)),
+        item.setAttribute("aria-expanded", "false"),
+      );
+      selectedCard = null;
+      activeCardButton = null;
+      if (trigger?.isConnected) trigger.focus();
+    };
+
+    // native dialog가 없는 fallback에서도 같은 닫기·초점 복귀 계약을 유지한다.
+    const closeDetail = () => {
+      if (typeof detailDialog.close === "function" && detailDialog.open) {
+        detailDialog.close();
+        return;
+      }
+      detailDialog.removeAttribute("open");
+      restoreCardFocus();
+    };
+
+    detailDialog.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      closeDetail();
+    });
+    detailDialog.addEventListener("close", restoreCardFocus);
+    detailDialog.addEventListener("click", (event) => {
+      if (event.target === detailDialog) closeDetail();
+    });
+    closeDetails.addEventListener("click", closeDetail);
+
+    // 카드의 전체 정보는 document flow가 아니라 접근 가능한 detail modal에만 채운다.
+    const openCardDetail = (card, button) => {
+      selectedCard = card;
+      activeCardButton = button;
+      cardButtons.forEach((item) =>
+        item.setAttribute("aria-expanded", String(item === button)),
       );
       detailTitle.textContent = `${card.id} · ${card.title}`;
       detailMeta.replaceChildren();
+      addBadge(detailMeta, card.status);
       addBadge(detailMeta, card.classification);
       addBadge(detailMeta, card.resolution);
       addBadge(detailMeta, card.severity);
@@ -543,6 +710,13 @@
         createDetailBlock(copy.history, "", historyLines),
       );
       detailGrid.replaceChildren(...detailBlocks);
+
+      if (typeof detailDialog.showModal === "function") {
+        detailDialog.showModal();
+      } else {
+        detailDialog.setAttribute("open", "");
+      }
+      closeDetails.focus();
     };
 
     statuses.forEach((status) => {
@@ -553,6 +727,10 @@
         element("span", "aqk-count", counts[status]),
       );
       const list = element("div", "aqk-card-list");
+      // 예상치 못한 host 동작으로 열 내부 scrollLeft가 생겨도 세로 scrollTop은 보존한다.
+      list.addEventListener("scroll", () => {
+        if (list.scrollLeft !== 0) list.scrollLeft = 0;
+      });
       const statusCards = cards.filter((card) => card.status === status);
       if (statusCards.length === 0) {
         list.append(element("p", "aqk-empty", copy.noCards));
@@ -562,10 +740,12 @@
         const button = element("button", "aqk-card");
         button.type = "button";
         button.dataset.severity = card.severity;
-        button.setAttribute("aria-pressed", "false");
+        button.setAttribute("aria-haspopup", "dialog");
+        button.setAttribute("aria-controls", detailDialog.id);
+        button.setAttribute("aria-expanded", "false");
         button.setAttribute("aria-label", `${card.id}: ${card.title}`);
         const cardMeta = element("div", "aqk-card-meta");
-        [card.classification, card.severity, card.change_scope]
+        [card.classification, card.severity]
           .filter((value) => value && value !== "none")
           .forEach((value) =>
             cardMeta.append(element("span", "aqk-chip", value)),
@@ -573,10 +753,9 @@
         button.append(
           element("p", "aqk-card-id", card.id),
           element("p", "aqk-card-title", card.title),
-          element("p", "aqk-card-summary", card.summary),
           cardMeta,
         );
-        button.addEventListener("click", () => selectCard(card, button));
+        button.addEventListener("click", () => openCardDetail(card, button));
         cardButtons.push(button);
         list.append(button);
       });
@@ -607,9 +786,6 @@
       });
     }
 
-    shell.append(meta, statusStrip, boardGrid, detail);
-    if (cardButtons.length > 0) {
-      cardButtons[0].click();
-    }
+    shell.append(meta, statusStrip, boardViewport, detailDialog);
   })();
 </script>

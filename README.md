@@ -10,10 +10,24 @@ The board JSON is the source of truth. Host-specific renderers turn the same
 board into a Codex inline visualization, a standalone/Claude HTML artifact, or
 a Markdown fallback.
 
-![Agent QA Kanban example showing QA cards and evidence details](./assets/qa-kanban-example.png)
+## Preview
 
-_Actual output rendered from `examples/qa-board.example.json`. The screenshot
-contains synthetic data only._
+### Compact six-column board
+
+![Agent QA Kanban compact board with six status columns](./assets/qa-kanban-example.png)
+
+The overview keeps all six statuses in one horizontal row. Each column scrolls
+vertically while the board wrapper owns horizontal scrolling.
+
+### Card detail dialog
+
+![Agent QA Kanban card detail dialog](./assets/qa-kanban-detail-dialog.png)
+
+Selecting a compact card opens its full evidence, diagnosis, and next action in
+a read-only dialog instead of extending the board page.
+
+_Both previews are rendered from `examples/qa-board.example.json` at the same
+viewport and contain synthetic data only._
 
 ## Why this exists
 

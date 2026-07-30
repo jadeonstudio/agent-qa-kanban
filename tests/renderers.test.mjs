@@ -56,7 +56,6 @@ test("fragment renderer produces a bounded inline-safe visualization", async () 
   assert.equal(output.includes("document.currentScript"), false);
   assert.equal(lowerOutput.includes("position: fixed"), false);
   assert.equal(lowerOutput.includes("100vh"), false);
-  assert.equal(lowerOutput.includes("overflow-x"), false);
   assert.equal(/#[0-9a-f]{3,8}\b/i.test(output), false);
   assert.ok(Buffer.byteLength(output, "utf8") < 2 * 1024 * 1024);
   assert.match(output, /window\.openai\?\.sendFollowUpMessage/);
@@ -65,6 +64,57 @@ test("fragment renderer produces a bounded inline-safe visualization", async () 
     /document\.getElementById\("aqk-[0-9a-f]{8}-[0-9a-f]{8}"\)/,
   );
   assert.match(output, /textContent/);
+});
+
+// 칸반 overview는 6열 한 줄과 이중 스크롤을 유지하고, 전체 상세는 modal로만 연다.
+test("fragment keeps a compact six-column board with modal-only details", async () => {
+  const temporaryDirectory = await mkdtemp(
+    resolve(tmpdir(), "agent-qa-kanban-compact-ui-"),
+  );
+  const outputPath = resolve(temporaryDirectory, "board-fragment.html");
+  runRenderer(exampleBoardPath, outputPath, "fragment");
+  const output = await readFile(outputPath, "utf8");
+
+  assert.match(
+    output,
+    /grid-template-columns: repeat\(6, minmax\(210px, 1fr\)\)/,
+  );
+  assert.match(
+    output,
+    /\.aqk-board-viewport \{[\s\S]*?overflow-x: auto;[\s\S]*?overflow-y: hidden;[\s\S]*?overscroll-behavior-x: contain;/,
+  );
+  assert.match(
+    output,
+    /\.aqk-card-list \{[\s\S]*?overflow-x: hidden;[\s\S]*?overflow-y: auto;[\s\S]*?overscroll-behavior-x: auto;[\s\S]*?overscroll-behavior-y: contain;/,
+  );
+  assert.match(output, /const getHorizontalWheelDelta = \(event\) =>/);
+  assert.match(
+    output,
+    /Math\.abs\(event\.deltaX\) > Math\.abs\(event\.deltaY\)/,
+  );
+  assert.match(output, /boardViewport\.scrollLeft \+= horizontalDelta/);
+  assert.match(output, /event\.preventDefault\(\)/);
+  assert.match(output, /\{ passive: false \}/);
+  assert.match(
+    output,
+    /if \(list\.scrollLeft !== 0\) list\.scrollLeft = 0/,
+  );
+  assert.match(
+    output,
+    /const detailDialog = element\("dialog", "aqk-dialog"\)/,
+  );
+  assert.match(output, /setAttribute\("aria-haspopup", "dialog"\)/);
+  assert.match(output, /detailDialog\.showModal\(\)/);
+  assert.match(output, /addEventListener\("cancel"/);
+  assert.match(output, /event\.target === detailDialog/);
+  assert.match(output, /trigger\?\.isConnected\) trigger\.focus\(\)/);
+  assert.equal(output.includes('element("p", "aqk-card-summary"'), false);
+  assert.equal(output.includes("cardButtons[0].click()"), false);
+  assert.equal(
+    output.includes('element("section", "aqk-detail")'),
+    false,
+  );
+  assert.equal(output.includes("draggable"), false);
 });
 
 // 동일 보드를 여러 번 렌더해 한 host 문서에 넣어도 DOM ID가 겹치지 않는다.
