@@ -1,0 +1,35 @@
+{
+  "id": "HQA-CHECKOUT-001",
+  "recorded_at": "2026-07-30T09:45:00+09:00",
+  "source": "human-feedback",
+  "status": "approved",
+  "session_id": "external-feedback-20260730",
+  "surface": {
+    "area": "checkout",
+    "location": "payment submit and retry"
+  },
+  "human_observed_symptom": "Retrying a slow checkout created the same order twice.",
+  "why_human_considered_it_wrong": "The user cannot tell whether the first attempt succeeded and may be charged or fulfilled twice.",
+  "root_cause_or_decision": "Order creation must be idempotent across retries, and the UI must preserve one checkout-attempt identity.",
+  "expected_behavior": "All retries for one checkout attempt resolve to a single order.",
+  "future_autoqa_rule": {
+    "trigger": "A create or payment action can be retried while the first request is pending or ambiguous.",
+    "checks": [
+      "Delay the first response and retry the same action.",
+      "Read back the list and detail using the resulting public identifier.",
+      "Verify that totals and downstream state exist exactly once."
+    ],
+    "expected_evidence": [
+      "One persisted business record.",
+      "One stable public identifier across both client attempts.",
+      "A passing automated idempotency check or equivalent API evidence."
+    ]
+  },
+  "pattern_ids": ["HQA-IDEMPOTENCY-001", "HQA-RETRY-001"],
+  "evidence_refs": ["QA-FE-001"],
+  "related_card_ids": ["QA-FE-001"],
+  "privacy": {
+    "redacted": true,
+    "notes": "No user, payment, or account identifiers are retained."
+  }
+}

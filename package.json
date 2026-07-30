@@ -1,0 +1,17 @@
+{
+  "name": "agent-qa-kanban",
+  "version": "0.1.0",
+  "description": "Evidence-led Agent Skill for AutoQA, inline kanban reporting, and human QA learning.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "validate:example": "node skills/agent-qa-kanban/scripts/validate-board.mjs examples/qa-board.example.json",
+    "validate:human-example": "node skills/agent-qa-kanban/scripts/validate-human-learning.mjs examples/human-feedback.example.json",
+    "render:example": "node skills/agent-qa-kanban/scripts/render-board.mjs examples/qa-board.example.json .tmp/qa-board.html --mode standalone",
+    "render:markdown": "node skills/agent-qa-kanban/scripts/render-markdown.mjs examples/qa-board.example.json .tmp/qa-board.md"
+  }
+}

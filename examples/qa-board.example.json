@@ -1,0 +1,327 @@
+{
+  "schema_version": "1.0",
+  "board": {
+    "id": "checkout-release-qa",
+    "title": "Checkout release QA",
+    "project": {
+      "name": "example-store",
+      "repository": "example/example-store"
+    },
+    "run_id": "run-20260730-001",
+    "goal": "Verify checkout regression patterns and explore adjacent payment states.",
+    "mode": "fix-with-approval",
+    "lane": "dual-lane",
+    "created_at": "2026-07-30T10:00:00+09:00",
+    "updated_at": "2026-07-30T10:45:00+09:00",
+    "locale": "en",
+    "human_learning_log": ".qa-kanban/human-qa-learning.jsonl",
+    "sensitive_data_redacted": true
+  },
+  "cards": [
+    {
+      "id": "QA-FLOW-001",
+      "kind": "flow",
+      "title": "Guest checkout happy path",
+      "summary": "Complete cart, address, payment preview, order creation, and read-back.",
+      "status": "done",
+      "resolution": "resolved",
+      "classification": "passed-check",
+      "severity": "info",
+      "change_scope": "none",
+      "origin": {
+        "type": "requirement",
+        "source_ref": "release acceptance criteria",
+        "reported_at": "2026-07-30T10:00:00+09:00"
+      },
+      "surface": {
+        "area": "checkout",
+        "location": "cart to order confirmation",
+        "routes": ["/cart", "/checkout", "/orders"],
+        "endpoints": ["POST /api/orders", "GET /api/orders/:id"],
+        "files": []
+      },
+      "reproduction": {
+        "preconditions": ["Use a non-production test account and test payment method."],
+        "steps": ["Add one item.", "Enter a valid address.", "Submit the order.", "Reload the order detail."],
+        "expected": "The confirmation and reloaded detail show the same item, amount, and status.",
+        "actual": "The confirmation and reloaded detail matched."
+      },
+      "diagnosis": {
+        "summary": "No defect observed in the verified happy path.",
+        "confidence": "confirmed"
+      },
+      "verification": {
+        "acceptance_criteria": ["Order is created once.", "Confirmation and read-back match."],
+        "checks": [
+          {
+            "id": "CHECK-001",
+            "type": "browser",
+            "status": "passed",
+            "summary": "Order confirmation and reload matched.",
+            "evidence_refs": ["EVIDENCE-001"]
+          }
+        ]
+      },
+      "evidence": [
+        {
+          "id": "EVIDENCE-001",
+          "type": "browser-observation",
+          "summary": "One test order was shown with the expected total after reload.",
+          "captured_at": "2026-07-30T10:15:00+09:00",
+          "redacted": true
+        }
+      ],
+      "next_action": "Keep this scenario in the release smoke set.",
+      "learning_refs": [],
+      "related_cards": ["QA-FE-001"],
+      "history": [
+        {
+          "at": "2026-07-30T10:01:00+09:00",
+          "actor": "qa-agent",
+          "from": "queued",
+          "to": "investigating",
+          "reason": "Started the primary checkout flow."
+        },
+        {
+          "at": "2026-07-30T10:15:00+09:00",
+          "actor": "qa-agent",
+          "from": "investigating",
+          "to": "done",
+          "reason": "The complete flow and reload passed."
+        }
+      ],
+      "updated_at": "2026-07-30T10:15:00+09:00"
+    },
+    {
+      "id": "QA-FE-001",
+      "kind": "finding",
+      "title": "Retry can submit the order twice",
+      "summary": "A human report says retrying after a slow response can create duplicate orders.",
+      "status": "verifying",
+      "resolution": "open",
+      "classification": "confirmed-bug",
+      "severity": "high",
+      "change_scope": "approved-product",
+      "origin": {
+        "type": "human-feedback",
+        "source_ref": "HQA-CHECKOUT-001",
+        "reported_at": "2026-07-30T09:30:00+09:00"
+      },
+      "surface": {
+        "area": "checkout",
+        "location": "payment submit action",
+        "routes": ["/checkout"],
+        "endpoints": ["POST /api/orders"],
+        "files": ["src/checkout/submit-order.ts"]
+      },
+      "reproduction": {
+        "preconditions": ["Use a test payment method.", "Delay the first order response."],
+        "steps": ["Submit the order.", "Retry before the first response completes.", "Read back the order list."],
+        "expected": "Only one order exists and both UI attempts resolve to the same order.",
+        "actual": "The original reproduction created two orders."
+      },
+      "diagnosis": {
+        "summary": "The client allowed a second request and the API lacked an idempotency key.",
+        "confidence": "confirmed"
+      },
+      "verification": {
+        "acceptance_criteria": ["Concurrent retries create one order.", "The UI leaves the pending state."],
+        "checks": [
+          {
+            "id": "CHECK-002",
+            "type": "unit",
+            "status": "passed",
+            "summary": "The idempotency key builder is stable for the same checkout attempt.",
+            "evidence_refs": ["EVIDENCE-002"]
+          },
+          {
+            "id": "CHECK-003",
+            "type": "browser",
+            "status": "planned",
+            "summary": "Rerun the delayed-response retry scenario.",
+            "evidence_refs": []
+          }
+        ]
+      },
+      "evidence": [
+        {
+          "id": "EVIDENCE-002",
+          "type": "test-result",
+          "summary": "Focused idempotency unit test passed after the approved fix.",
+          "ref": "tests/checkout-idempotency.test.ts",
+          "captured_at": "2026-07-30T10:40:00+09:00",
+          "redacted": true
+        }
+      ],
+      "next_action": "Rerun the delayed browser scenario and move to done only if one order is read back.",
+      "learning_refs": ["HQA-CHECKOUT-001"],
+      "related_cards": ["QA-FLOW-001"],
+      "history": [
+        {
+          "at": "2026-07-30T10:16:00+09:00",
+          "actor": "qa-agent",
+          "from": "queued",
+          "to": "investigating",
+          "reason": "Started the human-reported retry scenario."
+        },
+        {
+          "at": "2026-07-30T10:24:00+09:00",
+          "actor": "qa-agent",
+          "from": "investigating",
+          "to": "fixing",
+          "reason": "The user approved the confirmed idempotency fix."
+        },
+        {
+          "at": "2026-07-30T10:40:00+09:00",
+          "actor": "qa-agent",
+          "from": "fixing",
+          "to": "verifying",
+          "reason": "The focused unit check passed; browser read-back remains."
+        }
+      ],
+      "updated_at": "2026-07-30T10:40:00+09:00"
+    },
+    {
+      "id": "QA-FULL-001",
+      "kind": "finding",
+      "title": "Expired coupon error may leave a stale total",
+      "summary": "Exploratory QA found a candidate stale-total path after coupon rejection.",
+      "status": "investigating",
+      "resolution": "open",
+      "classification": "bug-candidate",
+      "severity": "medium",
+      "change_scope": "none",
+      "origin": {
+        "type": "agent-observation",
+        "source_ref": "run-20260730-001 exploration lane",
+        "reported_at": "2026-07-30T10:30:00+09:00"
+      },
+      "surface": {
+        "area": "checkout pricing",
+        "location": "coupon error and order summary",
+        "routes": ["/checkout"],
+        "endpoints": ["POST /api/coupons/validate"],
+        "files": []
+      },
+      "reproduction": {
+        "preconditions": ["Use an expired test coupon."],
+        "steps": ["Apply the coupon.", "Observe the error.", "Compare line items and total."],
+        "expected": "The rejected coupon is removed and every total uses the undiscounted amount.",
+        "actual": "One observation showed the old discounted total until another field changed."
+      },
+      "diagnosis": {
+        "summary": "A stale client selector is suspected; a second controlled reproduction is required.",
+        "confidence": "candidate"
+      },
+      "verification": {
+        "acceptance_criteria": ["All totals match immediately after rejection."],
+        "checks": [
+          {
+            "id": "CHECK-004",
+            "type": "browser",
+            "status": "planned",
+            "summary": "Repeat with network response evidence and a fresh cart.",
+            "evidence_refs": []
+          }
+        ]
+      },
+      "evidence": [
+        {
+          "id": "EVIDENCE-003",
+          "type": "browser-observation",
+          "summary": "A single stale-total observation was recorded without enough proof to confirm.",
+          "captured_at": "2026-07-30T10:30:00+09:00",
+          "redacted": true
+        }
+      ],
+      "next_action": "Repeat from a fresh cart and compare API, line items, and displayed total.",
+      "learning_refs": [],
+      "related_cards": [],
+      "history": [
+        {
+          "at": "2026-07-30T10:30:00+09:00",
+          "actor": "qa-agent",
+          "from": "queued",
+          "to": "investigating",
+          "reason": "Added from the exploration lane as a candidate."
+        }
+      ],
+      "updated_at": "2026-07-30T10:30:00+09:00"
+    },
+    {
+      "id": "QA-TOOL-001",
+      "kind": "test-debt",
+      "title": "Payment sandbox is unavailable",
+      "summary": "The external test provider cannot be reached from the current environment.",
+      "status": "blocked",
+      "resolution": "blocked",
+      "classification": "environment-blocker",
+      "severity": "low",
+      "change_scope": "none",
+      "origin": {
+        "type": "automated-check",
+        "source_ref": "sandbox connectivity check",
+        "reported_at": "2026-07-30T10:35:00+09:00"
+      },
+      "surface": {
+        "area": "payment integration",
+        "location": "external test provider",
+        "routes": [],
+        "endpoints": ["POST https://sandbox.example.test/payments"],
+        "files": []
+      },
+      "reproduction": {
+        "preconditions": ["Use the approved payment test environment."],
+        "steps": ["Attempt one sandbox test authorization."],
+        "expected": "The sandbox accepts the test authorization.",
+        "actual": "The sandbox hostname could not be resolved from the current environment."
+      },
+      "verification": {
+        "acceptance_criteria": ["The sandbox accepts a test authorization."],
+        "checks": [
+          {
+            "id": "CHECK-005",
+            "type": "integration",
+            "status": "blocked",
+            "summary": "DNS/network policy blocked the test endpoint.",
+            "evidence_refs": ["EVIDENCE-004"]
+          }
+        ]
+      },
+      "evidence": [
+        {
+          "id": "EVIDENCE-004",
+          "type": "log-summary",
+          "summary": "The test endpoint could not be resolved; no credential value was logged.",
+          "captured_at": "2026-07-30T10:35:00+09:00",
+          "redacted": true
+        }
+      ],
+      "next_action": "Rerun the sandbox check from an approved network environment.",
+      "blocker": {
+        "kind": "environment",
+        "required_action": "Provide an approved environment with test-provider access.",
+        "owner": "test-environment owner"
+      },
+      "learning_refs": [],
+      "related_cards": [],
+      "history": [
+        {
+          "at": "2026-07-30T10:34:00+09:00",
+          "actor": "qa-agent",
+          "from": "queued",
+          "to": "investigating",
+          "reason": "Started the payment sandbox integration check."
+        },
+        {
+          "at": "2026-07-30T10:35:00+09:00",
+          "actor": "qa-agent",
+          "from": "investigating",
+          "to": "blocked",
+          "reason": "The integration proof requires an approved network environment."
+        }
+      ],
+      "updated_at": "2026-07-30T10:35:00+09:00"
+    }
+  ]
+}

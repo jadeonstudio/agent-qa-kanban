@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Human QA learning entry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "recorded_at",
+    "source",
+    "status",
+    "session_id",
+    "surface",
+    "human_observed_symptom",
+    "why_human_considered_it_wrong",
+    "root_cause_or_decision",
+    "expected_behavior",
+    "future_autoqa_rule",
+    "pattern_ids",
+    "evidence_refs",
+    "related_card_ids",
+    "privacy"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$"
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "const": "human-feedback"
+    },
+    "status": {
+      "enum": ["candidate", "approved", "resolved", "superseded"]
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["area", "location"],
+      "properties": {
+        "area": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "location": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      }
+    },
+    "human_observed_symptom": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "why_human_considered_it_wrong": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "root_cause_or_decision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "expected_behavior": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "future_autoqa_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trigger", "checks", "expected_evidence"],
+      "properties": {
+        "trigger": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "expected_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        }
+      }
+    },
+    "pattern_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      },
+      "uniqueItems": true
+    },
+    "related_card_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "uniqueItems": true
+    },
+    "supersedes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "uniqueItems": true
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["redacted"],
+      "properties": {
+        "redacted": {
+          "const": true
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "superseded"
+          }
+        },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["supersedes"]
+      }
+    }
+  ]
+}

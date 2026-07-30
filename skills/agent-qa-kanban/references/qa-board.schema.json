@@ -1,0 +1,532 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent QA Kanban board",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "board", "cards"],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "board": {
+      "$ref": "#/$defs/board"
+    },
+    "cards": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/card"
+      }
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "repository": {
+          "type": "string",
+          "maxLength": 300
+        }
+      }
+    },
+    "board": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "project",
+        "run_id",
+        "mode",
+        "lane",
+        "created_at",
+        "updated_at",
+        "locale",
+        "sensitive_data_redacted"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "project": {
+          "$ref": "#/$defs/project"
+        },
+        "run_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$"
+        },
+        "goal": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "mode": {
+          "enum": ["audit-only", "write-tests", "fix-with-approval", "plan-only"]
+        },
+        "lane": {
+          "enum": ["regression", "exploration", "dual-lane"]
+        },
+        "created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "updated_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "locale": {
+          "type": "string",
+          "maxLength": 35,
+          "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+        },
+        "human_learning_log": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "sensitive_data_redacted": {
+          "const": true
+        }
+      }
+    },
+    "origin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "enum": [
+            "human-feedback",
+            "agent-observation",
+            "requirement",
+            "code-change",
+            "automated-check"
+          ]
+        },
+        "source_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "reported_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "human-feedback"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["source_ref"]
+          }
+        }
+      ]
+    },
+    "surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["area", "location"],
+      "properties": {
+        "area": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "location": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "uniqueItems": true
+        },
+        "endpoints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "uniqueItems": true
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "reproduction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["steps", "expected", "actual"],
+      "properties": {
+        "preconditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "expected": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "actual": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "diagnosis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "confidence"],
+      "properties": {
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "confidence": {
+          "enum": ["unknown", "candidate", "probable", "confirmed"]
+        }
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "status", "summary"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$"
+        },
+        "type": {
+          "enum": ["static", "unit", "integration", "api", "browser", "manual", "other"]
+        },
+        "status": {
+          "enum": ["planned", "passed", "failed", "blocked", "skipped"]
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["acceptance_criteria", "checks"],
+      "properties": {
+        "acceptance_criteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/check"
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "summary", "captured_at", "redacted"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$"
+        },
+        "type": {
+          "enum": [
+            "browser-observation",
+            "api-observation",
+            "test-result",
+            "static-trace",
+            "screenshot-ref",
+            "log-summary",
+            "human-feedback-ref",
+            "other"
+          ]
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "description": "Safe relative path or public HTTPS URL; the bundled validator enforces credential and private-network restrictions."
+        },
+        "captured_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "redacted": {
+          "const": true
+        }
+      }
+    },
+    "blocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "required_action", "owner"],
+      "properties": {
+        "kind": {
+          "enum": ["authority", "environment", "policy", "credential", "dependency", "other"]
+        },
+        "required_action": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        }
+      }
+    },
+    "history": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["at", "actor", "from", "to", "reason"],
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "actor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "from": {
+          "enum": ["queued", "investigating", "fixing", "verifying", "done", "blocked"]
+        },
+        "to": {
+          "enum": ["queued", "investigating", "fixing", "verifying", "done", "blocked"]
+        },
+        "reason": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "title",
+        "summary",
+        "status",
+        "resolution",
+        "classification",
+        "severity",
+        "change_scope",
+        "origin",
+        "surface",
+        "verification",
+        "evidence",
+        "next_action",
+        "learning_refs",
+        "related_cards",
+        "history",
+        "updated_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$"
+        },
+        "kind": {
+          "enum": ["flow", "finding", "test-debt", "improvement"]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 180
+        },
+        "summary": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "status": {
+          "enum": ["queued", "investigating", "fixing", "verifying", "done", "blocked"]
+        },
+        "resolution": {
+          "enum": ["open", "resolved", "unresolved", "blocked", "baseline", "deferred", "cancelled"]
+        },
+        "classification": {
+          "enum": [
+            "confirmed-bug",
+            "bug-candidate",
+            "policy-unclear",
+            "known-baseline",
+            "environment-blocker",
+            "test-debt",
+            "passed-check"
+          ]
+        },
+        "severity": {
+          "enum": ["critical", "high", "medium", "low", "info"]
+        },
+        "change_scope": {
+          "enum": ["none", "tests-only", "approved-product"]
+        },
+        "origin": {
+          "$ref": "#/$defs/origin"
+        },
+        "surface": {
+          "$ref": "#/$defs/surface"
+        },
+        "reproduction": {
+          "$ref": "#/$defs/reproduction"
+        },
+        "diagnosis": {
+          "$ref": "#/$defs/diagnosis"
+        },
+        "verification": {
+          "$ref": "#/$defs/verification"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "next_action": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "blocker": {
+          "$ref": "#/$defs/blocker"
+        },
+        "learning_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "uniqueItems": true
+        },
+        "related_cards": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "uniqueItems": true
+        },
+        "history": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/history"
+                },
+                {
+                  "properties": {
+                    "from": {
+                      "const": "queued"
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "items": {
+            "$ref": "#/$defs/history"
+          }
+        },
+        "updated_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "not": {
+                  "const": "queued"
+                }
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "history": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "classification": {
+                "not": {
+                  "const": "passed-check"
+                }
+              }
+            },
+            "required": ["classification"]
+          },
+          "then": {
+            "required": ["reproduction"]
+          }
+        }
+      ]
+    }
+  }
+}
