@@ -32,11 +32,10 @@ the system of record:
 
 ## Install
 
-Install from a future GitHub repository with an Agent Skills-compatible
-installer:
+Install directly from GitHub with an Agent Skills-compatible installer:
 
 ```bash
-npx skills add <owner>/<repository> --skill agent-qa-kanban
+npx skills add jadeonstudio/agent-qa-kanban --skill agent-qa-kanban
 ```
 
 Or copy `skills/agent-qa-kanban` into the skill directory used by your agent.
