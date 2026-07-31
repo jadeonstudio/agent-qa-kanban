@@ -35,6 +35,14 @@ When this skill is installed for Cursor and the agent runs in Cursor with
 Canvas available, the board opens as a **Canvas** beside the chat (side/right
 panel). This is not a Codex thread HTML fragment.
 
+#### Board overview
+
+![Cursor Canvas QA kanban six-column overview](./assets/qa-kanban-cursor-canvas.png)
+
+#### Card detail
+
+![Cursor Canvas QA kanban card detail panel with prompt copy](./assets/qa-kanban-cursor-detail.png)
+
 Card selection opens a full-width detail panel below the board. Compact cards
 show `severity` and `classification`; the detail panel shows `resolution`,
 `severity`, and `change_scope`, plus summary / surface / next action and
@@ -42,10 +50,11 @@ show `severity` and `classification`; the detail panel shows `resolution`,
 horizontally only. There is no drag-and-drop and no status-changing control —
 canonical updates stay in `qa-board.json`.
 
-To preview the current Cursor surface, generate from
+_Both Cursor previews contain synthetic QA data._
+
+To generate the current Cursor surface, use
 `examples/qa-board.example.json` with `scripts/hosts/cursor-canvas.mjs` and
-open the resulting `.canvas.tsx` in Cursor. Do not treat synthetic marketing
-images as runtime evidence for this host.
+open the resulting `.canvas.tsx` in Cursor.
 
 ## Why this exists
 
