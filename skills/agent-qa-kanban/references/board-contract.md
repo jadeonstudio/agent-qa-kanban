@@ -21,6 +21,22 @@ other semantic invariants that plain JSON Schema cannot fully express.
 Summary counts are always derived from cards. Do not store hand-maintained
 totals.
 
+## Locale
+
+`board.locale` is a BCP 47 language tag that drives renderer chrome (column
+labels, buttons, section titles). Agents must set it from the **user's
+language in the current session**, not from the example board default:
+
+- Korean user → `ko` / `ko-KR` (Korean chrome + Korean card copy)
+- English or unclear → `en`
+- other languages → matching BCP 47 tag; chrome may still fall back to English
+  until that locale is added to the renderer
+
+Card body fields remain free text, but they must be written in the same
+language as `board.locale` unless the user asks for a mixed-language board.
+Public examples may keep `en` for portable docs; live runs for a Korean user
+must not.
+
 ## Card field groups
 
 | Group | Purpose |

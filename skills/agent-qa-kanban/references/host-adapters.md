@@ -35,7 +35,9 @@ serialized as quoted data in the follow-up message.
 
 The fragment and standalone document preserve `board.locale`. Korean (`ko*`)
 uses Korean board labels; other locales currently use English labels while
-retaining the declared document language.
+retaining the declared document language. Agents must set `board.locale` from
+the user's session language (Korean user → `ko`/`ko-KR`) before rendering; do
+not leave a live Korean session on the English example default.
 
 ## Cursor Canvas
 

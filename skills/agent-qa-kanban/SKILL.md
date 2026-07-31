@@ -83,6 +83,16 @@ Record the lane in `board.lane`.
    safety boundaries.
 4. Record known baseline failures separately from new findings.
 5. Create or resume `.qa-kanban/runs/<run-id>/qa-board.json`.
+6. Set `board.locale` from the user's language automatically — do not wait for
+   an explicit locale request and do not default to English when the user is
+   clearly using another language:
+   - Korean conversation or Korean repo UI copy → `ko-KR` (or `ko`)
+   - otherwise use the dominant user language as a BCP 47 tag; fall back to
+     `en` only when the language is unclear
+   - write user-facing board fields (`title`, `summary`, `next_action`,
+     diagnosis, reproduction, blocker text) in that same language
+   - chrome labels (column names, buttons) follow `board.locale` in the
+     renderers; keep content language aligned with locale
 
 Create stable cards before execution for known scenarios. Add newly discovered
 cards as evidence appears; do not wait until the end.
