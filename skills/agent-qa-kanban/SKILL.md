@@ -165,9 +165,13 @@ Then follow [references/host-adapters.md](references/host-adapters.md):
 
 - Codex inline-capable host: render `--mode fragment` into the host-provided
   thread visualization directory, then emit the host inline directive.
+- Cursor host with this skill installed for Cursor, Canvas available, **and** a
+  Cursor runtime session (`CURSOR_AGENT` / `CURSOR_CONVERSATION_ID`): probe then
+  render a Canvas beside chat. See
+  [references/cursor-host.md](references/cursor-host.md).
 - HTML/Artifact-capable host: render `--mode standalone` and attach or display
   the resulting artifact.
-- No HTML surface: render Markdown.
+- No HTML/Canvas surface: render Markdown.
 
 ```bash
 node <skill-dir>/scripts/render-board.mjs \
@@ -176,9 +180,19 @@ node <skill-dir>/scripts/render-board.mjs \
 node <skill-dir>/scripts/render-board.mjs \
   <qa-board.json> <output.html> --mode standalone
 
+node <skill-dir>/scripts/hosts/cursor-capabilities.mjs
+
+node <skill-dir>/scripts/hosts/cursor-canvas.mjs \
+  <qa-board.json> \
+  --out <canvases-dir>/qa-kanban-<run-id>.canvas.tsx \
+  --report <report.json>
+
 node <skill-dir>/scripts/render-markdown.mjs \
   <qa-board.json> <output.md>
 ```
+
+On Cursor, only claim `cursor-canvas` when the capability probe gate passes and
+the `.canvas.tsx` file was written. Otherwise report Markdown honestly.
 
 Render after baseline creation, after meaningful status changes, and at
 completion. Avoid creating a new visual for every log line.
@@ -255,6 +269,8 @@ validated.
   [references/human-qa-learning.md](references/human-qa-learning.md)
 - Host rendering and fallback rules:
   [references/host-adapters.md](references/host-adapters.md)
+- Cursor Canvas gate and install notes:
+  [references/cursor-host.md](references/cursor-host.md)
 - Redaction and untrusted-data rules:
   [references/safety-and-redaction.md](references/safety-and-redaction.md)
 - Board JSON Schema:

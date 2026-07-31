@@ -7,13 +7,14 @@ actions are host capabilities.
 
 Choose the first supported output:
 
-1. host-provided inline HTML visualization
-2. HTML/Artifact attachment
-3. standalone HTML file preview
-4. Markdown
+1. host-provided inline HTML visualization (Codex)
+2. Cursor Canvas beside chat (only when the Cursor gate passes — see below)
+3. HTML/Artifact attachment
+4. standalone HTML file preview
+5. Markdown
 
 Record the selected renderer in the final QA summary. Do not claim an inline
-board when only a file was produced.
+or Canvas board when only a file or Markdown was produced.
 
 ## Codex inline visualization
 
@@ -36,6 +37,41 @@ The fragment and standalone document preserve `board.locale`. Korean (`ko*`)
 uses Korean board labels; other locales currently use English labels while
 retaining the declared document language.
 
+## Cursor Canvas
+
+Cursor has no Codex-equivalent thread HTML bridge. When **all** are true:
+
+1. `agent-qa-kanban` is installed under a Cursor/.agents skill path
+   (`.cursor/skills`, `.agents/skills`, or the matching user homes)
+2. the Cursor Canvas host skill exists
+   (`~/.cursor/skills-cursor/canvas/SKILL.md`)
+3. the current process is a Cursor runtime session
+   (`CURSOR_AGENT` and/or `CURSOR_CONVERSATION_ID`)
+
+render a Canvas board beside chat:
+
+```bash
+node <skill-dir>/scripts/hosts/cursor-capabilities.mjs
+
+node <skill-dir>/scripts/hosts/cursor-canvas.mjs \
+  <qa-board.json> \
+  --out <canvases-dir>/qa-kanban-<run-id>.canvas.tsx \
+  --report <report.json>
+```
+
+Details: [cursor-host.md](cursor-host.md).
+
+Rules:
+
+- Embed the validated board snapshot in the `.canvas.tsx` file (no `fetch`).
+- Import only from `cursor/canvas`.
+- Keep column scroll vertical-only and board scroll horizontal-only.
+- Show card details in a full-width panel below the board (avoid absolute
+  modals that clip inside Canvas side panels); never fake move/fix/verify.
+- Refuse output paths that would overwrite the canonical input board JSON.
+- If the gate fails, print or write Markdown and report `markdown-fallback`.
+- Do not call Cursor Canvas a “Codex inline visualization”.
+
 ## Claude or another Artifact host
 
 Render `--mode standalone`. Attach or display the CSP-protected HTML using the
@@ -51,7 +87,7 @@ bridge can persist the canonical JSON.
 
 ## Markdown fallback
 
-Render Markdown when HTML cannot be displayed. Include:
+Render Markdown when HTML/Canvas cannot be displayed. Include:
 
 - board mode and lane
 - counts by status and resolution
