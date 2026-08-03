@@ -78,8 +78,7 @@ Rules:
 ## Claude inline HTML widget
 
 When the Claude host exposes an inline HTML-widget tool (the `visualize` MCP
-`show_widget`, available on claude.ai and the Claude desktop app — not the plain
-terminal CLI):
+`show_widget`):
 
 1. Render `--mode claude-inline`.
 2. Read the file back and pass its contents as the widget body to `show_widget`.

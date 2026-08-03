@@ -191,16 +191,17 @@ function renderClaudeInline(fragment, instanceId) {
   }
 </style>`;
 
-  // fragment는 window.openai?.sendFollowUpMessage 존재 여부로 follow-up 버튼을 노출하므로,
-  // host가 openai 브리지를 제공하지 않을 때만 sendPrompt로 연결하는 shim을 정의한다.
+  // fragment는 window.openai?.sendFollowUpMessage 존재 여부로 follow-up 버튼을 노출한다.
+  // 실제 sendPrompt callback이 있을 때만 누락된 메서드를 연결해 무반응 버튼을 만들지 않는다.
   const followUpBridge = `<script>
-  window.openai = window.openai || {
-    sendFollowUpMessage: (payload) => {
-      if (typeof sendPrompt === "function") {
+  if (typeof sendPrompt === "function") {
+    window.openai = window.openai || {};
+    if (typeof window.openai.sendFollowUpMessage !== "function") {
+      window.openai.sendFollowUpMessage = (payload) => {
         sendPrompt(payload && payload.prompt ? payload.prompt : "");
-      }
-    },
-  };
+      };
+    }
+  }
 </script>`;
 
   return `${tokenBridge}\n${followUpBridge}\n${fragment}`;

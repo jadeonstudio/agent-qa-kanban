@@ -281,14 +281,55 @@ test("claude-inline renderer wraps the fragment for the visualize host", async (
   assert.ok(instanceId);
   assert.match(inline, new RegExp(`#${instanceId} \\{[\\s\\S]*?--foreground:`));
 
-  // follow-up 브리지는 host가 openai를 제공하지 않을 때만 sendPrompt로 연결한다.
-  assert.match(inline, /window\.openai = window\.openai \|\|/);
+  // follow-up 브리지는 실제 sendPrompt가 있을 때만 누락된 메서드를 연결한다.
   assert.match(inline, /typeof sendPrompt === "function"/);
+  assert.match(inline, /typeof window\.openai\.sendFollowUpMessage !== "function"/);
 
   // fragment 실행 스크립트 원본이 그대로 포함되어야 한다(템플릿 무손상).
   assert.ok(inline.includes("const detailDialog = element(\"dialog\", \"aqk-dialog\")"));
   assert.match(inline, /window\.openai\?\.sendFollowUpMessage/);
-  assert.ok(inline.length > (await readFile(fragmentPath, "utf8")).length);
+  const fragment = await readFile(fragmentPath, "utf8");
+  const fragmentStart = inline.indexOf(
+    `<section class="aqk-root" id="${instanceId}"`,
+  );
+  assert.ok(fragmentStart >= 0);
+  const normalizeInstanceId = (value) =>
+    value.replace(/aqk-[0-9a-f]{8}-[0-9a-f]{8}/g, "aqk-NORMALIZED");
+  assert.equal(
+    normalizeInstanceId(inline.slice(fragmentStart)),
+    normalizeInstanceId(fragment),
+  );
+});
+
+test("claude-inline follow-up bridge exposes only a working host callback", async () => {
+  const temporaryDirectory = await mkdtemp(
+    resolve(tmpdir(), "agent-qa-kanban-claude-bridge-"),
+  );
+  const inlinePath = resolve(temporaryDirectory, "board-inline.html");
+  runRenderer(exampleBoardPath, inlinePath, "claude-inline");
+  const inline = await readFile(inlinePath, "utf8");
+  const bridgeScript = [...inline.matchAll(/<script>([\s\S]*?)<\/script>/g)][0]?.[1];
+  assert.ok(bridgeScript);
+  const runBridge = new Function("window", "sendPrompt", bridgeScript);
+
+  const withoutCallback = {};
+  runBridge(withoutCallback, undefined);
+  assert.equal(withoutCallback.openai, undefined);
+
+  const prompts = [];
+  const partialOpenAi = { openai: { existing: true } };
+  runBridge(partialOpenAi, (prompt) => prompts.push(prompt));
+  assert.equal(partialOpenAi.openai.existing, true);
+  assert.equal(typeof partialOpenAi.openai.sendFollowUpMessage, "function");
+  partialOpenAi.openai.sendFollowUpMessage({ prompt: "continue-card" });
+  assert.deepEqual(prompts, ["continue-card"]);
+
+  const existingBridge = () => "existing";
+  const completeOpenAi = {
+    openai: { sendFollowUpMessage: existingBridge },
+  };
+  runBridge(completeOpenAi, (prompt) => prompts.push(prompt));
+  assert.equal(completeOpenAi.openai.sendFollowUpMessage, existingBridge);
 });
 
 // Claude 인라인 모드도 locale에 따라 한국어 라벨을 유지한다.
