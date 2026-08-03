@@ -7,8 +7,8 @@ Agent QA Kanban is an open Agent Skill that combines three workflows:
 3. append-only learning from explicit human QA feedback
 
 The board JSON is the source of truth. Host-specific renderers turn the same
-board into a Codex inline visualization, a Cursor Canvas beside chat, a
-standalone/Claude HTML artifact, or a Markdown fallback.
+board into a Codex inline visualization, a Cursor Canvas beside chat, a Claude
+inline widget, a standalone/Claude HTML artifact, or a Markdown fallback.
 
 ## Preview
 
@@ -145,6 +145,11 @@ node skills/agent-qa-kanban/scripts/render-board.mjs \
   .tmp/qa-board.html \
   --mode standalone
 
+node skills/agent-qa-kanban/scripts/render-board.mjs \
+  examples/qa-board.example.json \
+  .tmp/qa-board-inline.html \
+  --mode claude-inline
+
 node skills/agent-qa-kanban/scripts/render-markdown.mjs \
   examples/qa-board.example.json \
   .tmp/qa-board.md
@@ -193,6 +198,7 @@ The Agent Skills workflow is portable, but UI bridges are host-specific.
 | --- | --- |
 | Codex inline visualization | HTML fragment plus host inline directive |
 | Cursor Agent (skill installed + Canvas host + Cursor runtime) | Canvas beside chat (embedded board snapshot) |
+| Claude inline widget (visualize `show_widget`) | inline HTML mapped to the Claude palette |
 | HTML/Artifact-capable agent | standalone CSP-protected HTML |
 | File preview only | standalone HTML |
 | No HTML/Canvas surface | Markdown board |

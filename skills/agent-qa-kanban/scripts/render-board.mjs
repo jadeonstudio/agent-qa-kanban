@@ -10,7 +10,7 @@ import {
   serializeForHtmlScript,
 } from "./board-lib.mjs";
 
-// 렌더러는 fragment와 독립 실행형 HTML 두 모드만 허용한다.
+// 렌더러는 Codex fragment, 독립 실행형 HTML, Claude 인라인 세 모드를 허용한다.
 const inputPath = process.argv[2];
 const outputPath = process.argv[3];
 const modeFlagIndex = process.argv.indexOf("--mode");
@@ -26,11 +26,11 @@ const extraArguments = process.argv.filter(
 if (
   !inputPath ||
   !outputPath ||
-  !["fragment", "standalone"].includes(mode) ||
+  !["fragment", "standalone", "claude-inline"].includes(mode) ||
   extraArguments.length > 0
 ) {
   console.error(
-    "Usage: render-board.mjs <board.json> <output.html> --mode fragment|standalone",
+    "Usage: render-board.mjs <board.json> <output.html> --mode fragment|standalone|claude-inline",
   );
   process.exitCode = 2;
 } else {
@@ -49,12 +49,21 @@ if (
       .digest("hex")
       .slice(0, 8)}-${randomUUID().replaceAll("-", "").slice(0, 8)}`;
     const fragment = await renderFragment(board, instanceId);
-    const output =
-      mode === "fragment"
-        ? fragment
-        : renderStandalone(fragment, board.board.title, board.board.locale);
+    let output;
+    if (mode === "standalone") {
+      output = renderStandalone(
+        fragment,
+        board.board.title,
+        board.board.locale,
+      );
+    } else if (mode === "claude-inline") {
+      output = renderClaudeInline(fragment, instanceId);
+    } else {
+      output = fragment;
+    }
+    // 인라인 계열(Codex fragment, Claude 인라인)은 host 임베드 한도를 넘기면 잘라내지 않고 실패한다.
     if (
-      mode === "fragment" &&
+      mode !== "standalone" &&
       Buffer.byteLength(output, "utf8") >= 2 * 1024 * 1024
     ) {
       throw new Error(
@@ -154,6 +163,47 @@ function renderStandalone(fragment, title, locale) {
 </body>
 </html>
 `;
+}
+
+// Claude 인라인 호스트(visualize show_widget)용 래퍼.
+// Codex fragment 자체는 재사용하고, Codex/shadcn 토큰을 Claude 팔레트 변수로 매핑한 뒤
+// sendFollowUpMessage 호출을 host의 sendPrompt로 잇는다. fragment 템플릿은 건드리지 않는다.
+function renderClaudeInline(fragment, instanceId) {
+  // 매핑은 이 인스턴스 root에만 국한해 다른 위젯 색상에 영향을 주지 않는다.
+  // --border는 Claude가 :root에 정의하므로 재정의하지 않고 그대로 상속한다.
+  const tokenBridge = `<style>
+  #${instanceId} {
+    --foreground: var(--text-primary);
+    --background: var(--surface-2);
+    --card: var(--surface-2);
+    --card-foreground: var(--text-primary);
+    --primary: var(--text-accent);
+    --primary-foreground: var(--surface-2);
+    --secondary: var(--surface-1);
+    --secondary-foreground: var(--text-secondary);
+    --muted: var(--surface-1);
+    --muted-foreground: var(--text-muted);
+    --ring: var(--text-accent);
+    --destructive: var(--text-danger);
+    --viz-series-1: var(--text-accent);
+    --viz-series-2: var(--text-secondary);
+    --viz-series-3: var(--text-warning);
+  }
+</style>`;
+
+  // fragment는 window.openai?.sendFollowUpMessage 존재 여부로 follow-up 버튼을 노출하므로,
+  // host가 openai 브리지를 제공하지 않을 때만 sendPrompt로 연결하는 shim을 정의한다.
+  const followUpBridge = `<script>
+  window.openai = window.openai || {
+    sendFollowUpMessage: (payload) => {
+      if (typeof sendPrompt === "function") {
+        sendPrompt(payload && payload.prompt ? payload.prompt : "");
+      }
+    },
+  };
+</script>`;
+
+  return `${tokenBridge}\n${followUpBridge}\n${fragment}`;
 }
 
 // 문서 제목에만 필요한 최소 HTML 이스케이프를 수행한다.

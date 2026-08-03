@@ -179,6 +179,10 @@ Then follow [references/host-adapters.md](references/host-adapters.md):
   Cursor runtime session (`CURSOR_AGENT` / `CURSOR_CONVERSATION_ID`): probe then
   render a Canvas beside chat. See
   [references/cursor-host.md](references/cursor-host.md).
+- Claude host with an inline HTML-widget tool (the `visualize` MCP
+  `show_widget`): render `--mode claude-inline` and pass the file contents as
+  the widget body so the board renders inline in chat. Only claim inline when
+  that tool actually exists; otherwise fall back to standalone or Markdown.
 - HTML/Artifact-capable host: render `--mode standalone` and attach or display
   the resulting artifact.
 - No HTML/Canvas surface: render Markdown.
@@ -189,6 +193,9 @@ node <skill-dir>/scripts/render-board.mjs \
 
 node <skill-dir>/scripts/render-board.mjs \
   <qa-board.json> <output.html> --mode standalone
+
+node <skill-dir>/scripts/render-board.mjs \
+  <qa-board.json> <output.html> --mode claude-inline
 
 node <skill-dir>/scripts/hosts/cursor-capabilities.mjs
 

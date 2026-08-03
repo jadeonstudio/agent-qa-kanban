@@ -247,6 +247,100 @@ test("fragment renderer rejects output at or above the 2 MB host limit", async (
   assert.match(result.stderr, /exceeds the 2 MB/);
 });
 
+// Claude 인라인 모드는 Codex fragment를 그대로 재사용하되 팔레트 매핑과 sendPrompt 브리지를 덧붙인다.
+test("claude-inline renderer wraps the fragment for the visualize host", async () => {
+  const temporaryDirectory = await mkdtemp(
+    resolve(tmpdir(), "agent-qa-kanban-claude-inline-"),
+  );
+  const inlinePath = resolve(temporaryDirectory, "board-inline.html");
+  const fragmentPath = resolve(temporaryDirectory, "board-fragment.html");
+  runRenderer(exampleBoardPath, inlinePath, "claude-inline");
+  runRenderer(exampleBoardPath, fragmentPath, "fragment");
+  const inline = await readFile(inlinePath, "utf8");
+  const lowerInline = inline.toLowerCase();
+
+  // 인라인 위젯이므로 문서 셸이나 하드코딩 색상을 포함하지 않는다.
+  assert.equal(lowerInline.includes("<!doctype"), false);
+  assert.equal(lowerInline.includes("<html"), false);
+  assert.equal(lowerInline.includes("<head"), false);
+  assert.equal(lowerInline.includes("<body"), false);
+  assert.equal(/#[0-9a-f]{3,8}\b/i.test(inline), false);
+  assert.equal(lowerInline.includes("position: fixed"), false);
+  assert.equal(lowerInline.includes("100vh"), false);
+
+  // Codex/shadcn 토큰을 Claude show_widget 팔레트 변수로 매핑한다.
+  assert.match(inline, /--foreground: var\(--text-primary\)/);
+  assert.match(inline, /--card: var\(--surface-2\)/);
+  assert.match(inline, /--primary: var\(--text-accent\)/);
+  assert.match(inline, /--destructive: var\(--text-danger\)/);
+  // --border는 재정의하지 않고 host의 :root 값을 상속한다.
+  assert.equal(inline.includes("--border: var("), false);
+
+  // 매핑은 인스턴스 root에 국한된다.
+  const instanceId = inline.match(/id="(aqk-[0-9a-f]{8}-[0-9a-f]{8})"/)?.[1];
+  assert.ok(instanceId);
+  assert.match(inline, new RegExp(`#${instanceId} \\{[\\s\\S]*?--foreground:`));
+
+  // follow-up 브리지는 host가 openai를 제공하지 않을 때만 sendPrompt로 연결한다.
+  assert.match(inline, /window\.openai = window\.openai \|\|/);
+  assert.match(inline, /typeof sendPrompt === "function"/);
+
+  // fragment 실행 스크립트 원본이 그대로 포함되어야 한다(템플릿 무손상).
+  assert.ok(inline.includes("const detailDialog = element(\"dialog\", \"aqk-dialog\")"));
+  assert.match(inline, /window\.openai\?\.sendFollowUpMessage/);
+  assert.ok(inline.length > (await readFile(fragmentPath, "utf8")).length);
+});
+
+// Claude 인라인 모드도 locale에 따라 한국어 라벨을 유지한다.
+test("claude-inline renderer preserves Korean locale labels", async () => {
+  const temporaryDirectory = await mkdtemp(
+    resolve(tmpdir(), "agent-qa-kanban-claude-inline-ko-"),
+  );
+  const koreanBoardPath = resolve(temporaryDirectory, "board-ko.json");
+  const inlinePath = resolve(temporaryDirectory, "board-ko-inline.html");
+  const board = JSON.parse(await readFile(exampleBoardPath, "utf8"));
+  board.board.locale = "ko";
+  await writeFile(koreanBoardPath, JSON.stringify(board), "utf8");
+  runRenderer(koreanBoardPath, inlinePath, "claude-inline");
+  const inline = await readFile(inlinePath, "utf8");
+  assert.match(inline, /lang="ko"/);
+  assert.match(inline, /QA 칸반 보드/);
+  assert.match(inline, /재현 단계/);
+});
+
+// Claude 인라인 결과도 host 임베드 한도를 넘으면 잘라내지 않고 실패한다.
+test("claude-inline renderer rejects output at or above the 2 MB host limit", async () => {
+  const temporaryDirectory = await mkdtemp(
+    resolve(tmpdir(), "agent-qa-kanban-claude-inline-large-"),
+  );
+  const largeBoardPath = resolve(temporaryDirectory, "large-board.json");
+  const outputPath = resolve(temporaryDirectory, "large-board.html");
+  const board = JSON.parse(await readFile(exampleBoardPath, "utf8"));
+  const baseCard = board.cards[2];
+  board.cards = Array.from({ length: 540 }, (_, index) => ({
+    ...structuredClone(baseCard),
+    id: `QA-BULK-${String(index).padStart(3, "0")}`,
+    summary: "x".repeat(4000),
+    related_cards: [],
+    learning_refs: [],
+  }));
+  await writeFile(largeBoardPath, JSON.stringify(board), "utf8");
+
+  const result = spawnSync(
+    process.execPath,
+    [
+      resolve(scriptDirectory, "render-board.mjs"),
+      largeBoardPath,
+      outputPath,
+      "--mode",
+      "claude-inline",
+    ],
+    { encoding: "utf8" },
+  );
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /exceeds the 2 MB/);
+});
+
 // Markdown fallback도 모든 상태 그룹과 핵심 다음 행동을 보존한다.
 test("Markdown renderer keeps complete board semantics", async () => {
   const temporaryDirectory = await mkdtemp(
