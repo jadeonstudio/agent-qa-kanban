@@ -406,7 +406,7 @@ test("portable visual paths reject traversal, absolute paths, and canonical name
   }
 });
 
-test("visual writes reject symlink directory escapes", async () => {
+test("visual writes reject symlink directory escapes", async (context) => {
   const { runDirectory, boardPath } = await createRunFixture(
     makeAvailableBoard(await readBoard()),
   );
@@ -417,7 +417,22 @@ test("visual writes reject symlink directory escapes", async () => {
       recursive: true,
       force: true,
     });
-    await symlink(externalDirectory, join(runDirectory, "visual/screenshots"));
+    try {
+      await symlink(
+        externalDirectory,
+        join(runDirectory, "visual/screenshots"),
+        process.platform === "win32" ? "junction" : "dir",
+      );
+    } catch (error) {
+      if (
+        process.platform === "win32" &&
+        ["EPERM", "EACCES", "UNKNOWN"].includes(error?.code)
+      ) {
+        context.skip("Windows runner does not grant symlink or junction creation");
+        return;
+      }
+      throw error;
+    }
     await assert.rejects(
       () =>
         writeVisualArtifact({

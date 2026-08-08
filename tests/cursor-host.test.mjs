@@ -328,14 +328,25 @@ test("CLI refuses to overwrite the input board path", async () => {
   await rm(outDir, { recursive: true, force: true });
 });
 
-test("renderCursorBoard refuses symlink --out aliasing the board", async () => {
+test("renderCursorBoard refuses symlink --out aliasing the board", async (context) => {
   const outDir = await makeFixtureHome();
   try {
     const boardPath = join(outDir, "qa-board.json");
     const outPath = join(outDir, "alias.canvas.tsx");
     const boardText = await readFile(exampleBoardPath, "utf8");
     await writeFile(boardPath, boardText, "utf8");
-    await symlink(boardPath, outPath);
+    try {
+      await symlink(boardPath, outPath);
+    } catch (error) {
+      if (
+        process.platform === "win32" &&
+        ["EPERM", "EACCES", "UNKNOWN"].includes(error?.code)
+      ) {
+        context.skip("Windows runner does not grant file symlink creation");
+        return;
+      }
+      throw error;
+    }
     const beforeHash = sha256(await readFile(boardPath, "utf8"));
     const board = await loadExampleBoard();
     await assert.rejects(
