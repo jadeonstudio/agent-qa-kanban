@@ -35,6 +35,10 @@ function sourceRoot(root, sourcePath) {
   return realpathSync(resolve(root, sourcePath));
 }
 
+function portableRelative(root, path) {
+  return relative(root, path).split(sep).join("/");
+}
+
 export function validatePluginPackaging(rootDir) {
   const root = realpathSync(rootDir);
   const paths = {
@@ -129,9 +133,9 @@ export function validatePluginPackaging(rootDir) {
     facts: {
       plugin: PLUGIN_NAME,
       version: pkg.version,
-      canonicalSkill: relative(root, paths.skill),
-      codexSource: relative(root, sourceRoot(root, codexEntry.source.path)) || ".",
-      claudeSource: relative(root, sourceRoot(root, claudeEntry.source)) || ".",
+      canonicalSkill: portableRelative(root, paths.skill),
+      codexSource: portableRelative(root, sourceRoot(root, codexEntry.source.path)) || ".",
+      claudeSource: portableRelative(root, sourceRoot(root, claudeEntry.source)) || ".",
       grokCompatibility: "Claude plugin and marketplace layout",
       installationSideEffects: "none declared"
     }
