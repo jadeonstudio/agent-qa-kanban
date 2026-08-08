@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         node: [20, 22]
     steps:
       - uses: actions/checkout@v4
@@ -26,6 +26,45 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm test
+      - run: npm run validate:examples
+      - run: npm run validate:plugins
+      - run: npm run verify:release
+
+  windows-test:
+    name: windows-latest / Node ${{ matrix.node }} / ${{ matrix.suite }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+        suite:
+          - board-lib
+          - cursor-host
+          - human-learning-recorder
+          - plugin-packaging
+          - renderers
+          - visual-profile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: node --test tests/${{ matrix.suite }}.test.mjs
+
+  windows-validate:
+    name: windows-latest / Node ${{ matrix.node }} / validation
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
       - run: npm run validate:examples
       - run: npm run validate:plugins
       - run: npm run verify:release
