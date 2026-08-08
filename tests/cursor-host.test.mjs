@@ -157,9 +157,10 @@ test("unverified PATH agent binaries are ignored", () => {
 });
 
 test("trusted cursor-agent binary is recorded", () => {
-  const binary = "/opt/cursor/cursor-agent";
+  const binaryDir = join("virtual", "opt", "cursor");
+  const binary = join(binaryDir, "cursor-agent");
   const result = detectCursorAgentCli({
-    env: { PATH: "/opt/cursor" },
+    env: { PATH: binaryDir },
     pathExists: (path) => path === binary,
     realpath: (path) => path,
   });
