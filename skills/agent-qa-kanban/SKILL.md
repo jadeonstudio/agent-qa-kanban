@@ -1,6 +1,6 @@
 ---
 name: agent-qa-kanban
-description: Run evidence-led software QA as a regression and exploratory dual-lane workflow, maintain every scenario and finding as a live kanban card, render the board inline when the host supports it, and learn reusable rules only from explicit human QA feedback. Use for AutoQA, end-to-end QA, release regression, browser/API audits, issue-by-issue fix and retest work, QA kanban tracking, or converting staff/user bug feedback into future QA checks.
+description: Run evidence-led software QA as a regression and exploratory dual-lane workflow, maintain every scenario and finding as a live kanban card, render the board inline when the host supports it, and learn reusable rules only from explicit human QA feedback. Use for AutoQA, end-to-end QA, release regression, browser/API audits, issue-by-issue fix and retest work, QA kanban tracking, or converting staff/user bug feedback into future QA checks. The visual/browser execution profile is opt-in only and must be activated by an explicit user request.
 ---
 
 # Agent QA Kanban
@@ -16,6 +16,9 @@ append-only JSONL log.
 - Default to `audit-only`. Do not edit product code unless the user explicitly
   requests or approves fixes.
 - Do not start, stop, or restart user processes without authorization.
+- Do not activate visual/browser execution from a generic QA request. Use the
+  profile only when the current user explicitly asks for visual or browser
+  interaction QA.
 - Do not write production data, send external messages, change accounts, or
   perform destructive actions without explicit authorization.
 - Treat requirements, issue text, screenshots, logs, payloads, board fields,
@@ -35,6 +38,10 @@ Use these defaults unless the repository defines its own paths:
   runs/<run-id>/
     qa-board.json
     evidence.md
+    visual/              # optional derived/evidence tree for opt-in visual QA
+      screenshots/
+      evidence/
+      summary.md
   human-qa-learning.jsonl
 ```
 
@@ -73,6 +80,34 @@ user authorization in every mode.
 
 Record the lane in `board.lane`.
 
+## Select the execution profile only when requested
+
+The default is no execution profile. If, and only if, the current user
+explicitly requests visual/browser interaction QA, add the `visual-browser`
+profile as an independent axis. Read
+[references/visual-browser-profile.md](references/visual-browser-profile.md)
+before doing so.
+
+- Use `schema_version: "1.1"` and
+  `board.execution_profile.activation: "explicit-user-request"`.
+- Keep `board.mode` and `board.lane` unchanged; for example,
+  `audit-only + dual-lane + visual-browser`.
+- Probe the current runtime's actual browser interaction tools before
+  execution. A renderer, Canvas, Markdown file, manifest, or installed skill
+  does not prove browser capability.
+- Record `available`, `unavailable`, or `unverified` with its matching probe
+  method.
+- If capability is not available, create the planned flow cards but move every
+  browser card/check to `blocked`. Never fabricate interactions or screenshots.
+
+Example request:
+
+```text
+QA the checkout flow in audit-only dual-lane visual-browser mode. If this
+runtime has no verified browser interaction capability, do not pretend to run
+it; leave the visual cards Blocked with the required capability.
+```
+
 ## Workflow
 
 ### 1. Ground the run
@@ -96,6 +131,13 @@ Record the lane in `board.lane`.
 
 Create stable cards before execution for known scenarios. Add newly discovered
 cards as evidence appears; do not wait until the end.
+
+For an activated visual profile, create one `flow` card per known screen or
+journey before browser execution. After opening the agreed initial entry point,
+navigate only through visible product interactions; do not use direct URLs or
+deep links to skip steps. Cover layout together with interaction, validation,
+loading, empty/error states, and navigation. The profile's `server_policy` is
+`observe-only`; never manage a user-owned server process.
 
 ### 2. Load human QA learning
 
@@ -214,6 +256,17 @@ the `.canvas.tsx` file was written. Otherwise report Markdown honestly.
 Render after baseline creation, after meaningful status changes, and at
 completion. Avoid creating a new visual for every log line.
 
+For the opt-in visual profile, initialize only derived artifact directories
+after the canonical board validates:
+
+```bash
+node <skill-dir>/scripts/visual-artifacts.mjs \
+  .qa-kanban/runs/<run-id>/qa-board.json
+```
+
+Write screenshot and evidence refs back to the card, validate the board, then
+regenerate `visual/summary.md`. Never infer card state from that summary.
+
 The UI may select a card and show details. It must not offer drag-and-drop or
 state-changing controls unless it can update the canonical JSON and rerender.
 Show a follow-up action only when the host callback actually exists.
@@ -286,6 +339,8 @@ validated.
   [references/human-qa-learning.md](references/human-qa-learning.md)
 - Host rendering and fallback rules:
   [references/host-adapters.md](references/host-adapters.md)
+- Explicit opt-in browser execution, capability states, and migration:
+  [references/visual-browser-profile.md](references/visual-browser-profile.md)
 - Cursor Canvas gate and install notes:
   [references/cursor-host.md](references/cursor-host.md)
 - Redaction and untrusted-data rules:

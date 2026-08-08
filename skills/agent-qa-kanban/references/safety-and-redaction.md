@@ -35,12 +35,37 @@ Never store:
 - personal phone numbers, emails, addresses, or account IDs
 - screenshots containing unredacted private data
 
-The validator does not automatically discover or redact secrets/PII inside
-free-form summaries. `redacted: true` is an auditable assertion by the agent or
-human preparing the entry, not a data-loss-prevention scanner. Review and
-redact source evidence before setting it to true.
+The validator applies a conservative high-signal scan to opt-in visual-profile
+cards for credential/cookie/token assignments, email addresses, and phone
+numbers. It rejects matches; it never rewrites them. This is not full data-loss
+prevention. Legacy/non-visual free text and screenshots still require manual
+review, and `redacted: true` remains an auditable assertion by the agent or
+human preparing the entry.
 
 Store a safe summary and a restricted evidence reference instead.
+
+## Visual artifact writes
+
+Visual evidence is derived or evidentiary data under the canonical run:
+
+```text
+<run>/visual/screenshots/
+<run>/visual/evidence/
+<run>/visual/summary.md
+```
+
+Use `scripts/visual-artifacts.mjs` to initialize this tree. Its writer rejects:
+
+- POSIX, Windows drive, and UNC absolute paths
+- `..`, empty path components, control characters, and canonical names
+- symlink directories or targets
+- existing hardlinked outputs, including aliases of `qa-board.json`
+- writes outside the run's `visual/` directory
+
+The helper writes atomically and does not modify `qa-board.json`. Review and
+redact screenshots, console/DOM notes, and URLs before linking them from a
+card. Do not save raw HAR files unless they have been scrubbed of request
+headers, cookies, query credentials, and private payloads.
 
 ## Output limits
 

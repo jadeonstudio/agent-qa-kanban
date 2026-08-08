@@ -493,6 +493,12 @@
     const badges = element("div", "aqk-badges");
     addBadge(badges, board.board?.mode || "unknown mode", "is-mode");
     addBadge(badges, board.board?.lane || "unknown lane");
+    if (board.board?.execution_profile) {
+      addBadge(
+        badges,
+        `${board.board.execution_profile.name} · ${board.board.execution_profile.browser_capability?.status || "unverified"}`,
+      );
+    }
     addBadge(badges, `${copy.updated} ${board.board?.updated_at || "-"}`);
     meta.append(badges);
 

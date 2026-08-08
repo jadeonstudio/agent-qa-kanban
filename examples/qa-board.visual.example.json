@@ -1,0 +1,110 @@
+{
+  "schema_version": "1.1",
+  "board": {
+    "id": "visual-checkout-qa",
+    "title": "Checkout visual/browser QA",
+    "project": {
+      "name": "Example Store",
+      "repository": "example/store"
+    },
+    "run_id": "run-visual-example-001",
+    "goal": "Verify the checkout journey through real user interactions.",
+    "mode": "audit-only",
+    "lane": "dual-lane",
+    "created_at": "2026-08-07T01:00:00Z",
+    "updated_at": "2026-08-07T01:05:00Z",
+    "locale": "en",
+    "execution_profile": {
+      "name": "visual-browser",
+      "activation": "explicit-user-request",
+      "requested_at": "2026-08-07T01:00:00Z",
+      "navigation_policy": "ui-interactions-after-entry",
+      "server_policy": "observe-only",
+      "browser_capability": {
+        "status": "unavailable",
+        "host": "example-host",
+        "checked_at": "2026-08-07T01:01:00Z",
+        "probe_method": "runtime-tool-unavailable",
+        "summary": "The current runtime exposes no browser interaction tool."
+      }
+    },
+    "sensitive_data_redacted": true
+  },
+  "cards": [
+    {
+      "id": "QA-VISUAL-001",
+      "kind": "flow",
+      "title": "Checkout navigation and validation",
+      "summary": "Exercise the checkout journey from its initial entry point without deep links.",
+      "status": "blocked",
+      "resolution": "blocked",
+      "classification": "environment-blocker",
+      "severity": "info",
+      "change_scope": "none",
+      "origin": {
+        "type": "requirement",
+        "source_ref": "explicit visual QA request"
+      },
+      "surface": {
+        "area": "checkout",
+        "location": "cart to confirmation",
+        "routes": [
+          "/cart"
+        ]
+      },
+      "reproduction": {
+        "preconditions": [
+          "The user-provided application is already running."
+        ],
+        "steps": [
+          "Open the initial cart entry point.",
+          "Use visible controls to proceed through checkout.",
+          "Submit an invalid form and observe validation.",
+          "Complete the allowed non-destructive path and verify navigation."
+        ],
+        "expected": "Layout, interaction, validation, loading, and navigation remain usable.",
+        "actual": "Not executed because browser capability is unavailable."
+      },
+      "verification": {
+        "acceptance_criteria": [
+          "Every step is performed through the product UI after the initial entry point.",
+          "Browser observations are linked as redacted evidence before completion."
+        ],
+        "checks": [
+          {
+            "id": "CHECK-VISUAL-001",
+            "type": "browser",
+            "status": "blocked",
+            "summary": "Browser interaction cannot run in the current host."
+          }
+        ]
+      },
+      "evidence": [],
+      "next_action": "Run this board in a host with a verified browser interaction tool.",
+      "blocker": {
+        "kind": "environment",
+        "required_action": "Provide a runtime with verified browser interaction capability.",
+        "owner": "runtime host"
+      },
+      "learning_refs": [],
+      "related_cards": [],
+      "history": [
+        {
+          "at": "2026-08-07T01:02:00Z",
+          "actor": "qa-agent",
+          "from": "queued",
+          "to": "investigating",
+          "reason": "Started capability verification before browser execution."
+        },
+        {
+          "at": "2026-08-07T01:05:00Z",
+          "actor": "qa-agent",
+          "from": "investigating",
+          "to": "blocked",
+          "reason": "The host has no verified browser interaction capability."
+        }
+      ],
+      "updated_at": "2026-08-07T01:05:00Z"
+    }
+  ]
+}

@@ -5,10 +5,14 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import {
   BOARD_MODES,
+  BOARD_SCHEMA_VERSIONS,
+  BROWSER_CAPABILITY_STATUSES,
+  BROWSER_PROBE_METHODS,
   CARD_CLASSIFICATIONS,
   CARD_RESOLUTIONS,
   CARD_STATUSES,
   CHANGE_SCOPES,
+  EXECUTION_PROFILES,
   QA_LANES,
   ValidationError,
   assertValidBoard,
@@ -299,7 +303,20 @@ test("public schema enums stay aligned with the runtime validator", async () => 
     ),
   );
   assert.deepEqual(boardSchema.$defs.board.properties.mode.enum, BOARD_MODES);
+  assert.deepEqual(boardSchema.properties.schema_version.enum, BOARD_SCHEMA_VERSIONS);
   assert.deepEqual(boardSchema.$defs.board.properties.lane.enum, QA_LANES);
+  assert.deepEqual(
+    [boardSchema.$defs.executionProfile.properties.name.const],
+    EXECUTION_PROFILES,
+  );
+  assert.deepEqual(
+    boardSchema.$defs.browserCapability.properties.status.enum,
+    BROWSER_CAPABILITY_STATUSES,
+  );
+  assert.deepEqual(
+    boardSchema.$defs.browserCapability.properties.probe_method.enum,
+    BROWSER_PROBE_METHODS,
+  );
   assert.deepEqual(boardSchema.$defs.card.properties.status.enum, CARD_STATUSES);
   assert.deepEqual(
     boardSchema.$defs.card.properties.resolution.enum,

@@ -3,6 +3,13 @@
 The Agent Skill and board schema are portable. Inline rendering and follow-up
 actions are host capabilities.
 
+Board rendering capability is separate from visual/browser execution
+capability. An inline HTML surface, Cursor Canvas, Claude widget, artifact, or
+Markdown output does not prove that the host can operate a browser. When the
+explicit `visual-browser` profile is active, inspect the current runtime's
+actual interaction tools and record `available`, `unavailable`, or `unverified`
+as defined in [visual-browser-profile.md](visual-browser-profile.md).
+
 ## Capability selection
 
 Choose the first supported output:
@@ -16,6 +23,19 @@ Choose the first supported output:
 
 Record the selected renderer in the final QA summary. Do not claim an inline
 or Canvas board when only a file or Markdown was produced.
+
+## Browser execution capability by host
+
+| Host | Rendering support | Visual/browser execution claim |
+| --- | --- | --- |
+| Codex | inline fragment when the thread visualization surface exists | `available` only when the current session exposes a callable browser interaction tool |
+| Cursor | capability-gated Canvas or Markdown | Canvas capability alone is not browser capability; probe the current runtime separately |
+| Claude | conditional widget, artifact, or Markdown | `show_widget` is rendering only; require a separate browser interaction tool |
+| Grok or other hosts | portable standalone/Markdown fallback | do not claim browser execution without verified runtime tooling |
+
+If the runtime cannot establish browser tooling, keep the visual cards Blocked
+and render the complete board through the normal fallback. Never add fake
+retry, capture, navigate, or state-changing controls.
 
 ## Codex inline visualization
 

@@ -14,12 +14,23 @@ other semantic invariants that plain JSON Schema cannot fully express.
 
 | Field | Purpose |
 | --- | --- |
-| `schema_version` | Contract version; currently `1.0` |
+| `schema_version` | `1.0` for legacy/non-profile boards; `1.1` when `execution_profile` is present |
 | `board` | Run identity, mode, lane, timestamps, locale, and project |
 | `cards` | Ordered QA scenarios, findings, test debt, and improvements |
 
 Summary counts are always derived from cards. Do not store hand-maintained
 totals.
+
+## Optional execution profile
+
+The only current execution profile is `visual-browser`. It is an independent,
+explicitly requested axis; it does not replace `mode` or `lane`. The field is
+absent by default, and the validator never infers it from a browser check.
+
+`schema_version: "1.1"` is required when the profile is present. The profile
+records its explicit-user activation, UI-only navigation after the initial
+entry point, observe-only server policy, and an honest host capability result.
+See [visual-browser-profile.md](visual-browser-profile.md).
 
 ## Locale
 
@@ -117,6 +128,8 @@ Additional rules:
 
 - Moving from `done` reopens the card and requires a history reason.
 - `done + resolved` requires a passing check and evidence.
+- A visual `done + resolved` card specifically requires a passing browser
+  check linked to browser-observation or screenshot evidence.
 - `done + baseline` requires baseline evidence.
 - `done + cancelled` requires a cancellation reason in `next_action` or history.
 - `blocked` requires `blocker.kind`, `blocker.required_action`, and
@@ -143,6 +156,12 @@ Evidence records contain a short safe summary and optional reference. Prefer:
 
 Do not store raw cookies, tokens, credentials, private payloads, or unredacted
 personal data.
+
+For the visual profile, every visual scenario/finding has `reproduction`, and
+relative evidence refs stay under `visual/` (`screenshot-ref` under
+`visual/screenshots/`). If capability is unavailable or unverified, the card,
+resolution, blocker, and browser check must all record the environment block;
+browser/screenshot evidence is forbidden because no interaction ran.
 
 ## Stable IDs
 

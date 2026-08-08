@@ -1,7 +1,7 @@
 {
   "name": "agent-qa-kanban",
   "version": "0.1.0",
-  "description": "Evidence-led Agent Skill for AutoQA, inline kanban reporting, and human QA learning.",
+  "description": "Evidence-led Agent Skill for AutoQA, inline kanban reporting, opt-in visual browser QA, and human QA learning.",
   "type": "module",
   "license": "MIT",
   "engines": {
@@ -9,8 +9,18 @@
   },
   "scripts": {
     "test": "node --test tests/*.test.mjs",
+    "validate:plugins": "node scripts/plugin-contract.mjs",
+    "validate:codex-plugin": "node scripts/plugin-contract.mjs",
+    "validate:claude-plugin": "node scripts/plugin-contract.mjs",
+    "validate:grok-plugin": "node scripts/plugin-contract.mjs",
+    "validate:claude-plugin:host": "claude plugin validate . --strict",
+    "validate:grok-plugin:host": "grok plugin validate .",
+    "verify:isolated-install": "node scripts/verify-isolated-install.mjs",
+    "verify:release": "node scripts/verify-release.mjs",
     "validate:example": "node skills/agent-qa-kanban/scripts/validate-board.mjs examples/qa-board.example.json",
+    "validate:visual-example": "node skills/agent-qa-kanban/scripts/validate-board.mjs examples/qa-board.visual.example.json",
     "validate:human-example": "node skills/agent-qa-kanban/scripts/validate-human-learning.mjs examples/human-feedback.example.json",
+    "validate:examples": "npm run validate:example && npm run validate:visual-example && npm run validate:human-example",
     "render:example": "node skills/agent-qa-kanban/scripts/render-board.mjs examples/qa-board.example.json .tmp/qa-board.html --mode standalone",
     "render:markdown": "node skills/agent-qa-kanban/scripts/render-markdown.mjs examples/qa-board.example.json .tmp/qa-board.md",
     "probe:cursor": "node skills/agent-qa-kanban/scripts/hosts/cursor-capabilities.mjs",

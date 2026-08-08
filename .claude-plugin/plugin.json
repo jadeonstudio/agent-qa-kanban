@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "agent-qa-kanban",
+  "version": "0.1.0",
+  "description": "Evidence-led QA with a canonical kanban, opt-in visual browser testing, and explicit human feedback learning.",
+  "author": { "name": "jadeonstudio", "url": "https://github.com/jadeonstudio" },
+  "homepage": "https://github.com/jadeonstudio/agent-qa-kanban",
+  "repository": "https://github.com/jadeonstudio/agent-qa-kanban",
+  "license": "MIT",
+  "keywords": ["claude-code", "grok", "agent-skills", "qa", "kanban", "visual-testing"]
+}

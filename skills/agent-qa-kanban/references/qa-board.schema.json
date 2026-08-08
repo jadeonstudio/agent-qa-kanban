@@ -6,7 +6,7 @@
   "required": ["schema_version", "board", "cards"],
   "properties": {
     "schema_version": {
-      "const": "1.0"
+      "enum": ["1.0", "1.1"]
     },
     "board": {
       "$ref": "#/$defs/board"
@@ -18,6 +18,25 @@
       }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "board": {
+            "required": ["execution_profile"]
+          }
+        },
+        "required": ["board"]
+      },
+      "then": {
+        "properties": {
+          "schema_version": {
+            "const": "1.1"
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "nonEmptyString": {
       "type": "string",
@@ -41,6 +60,69 @@
         "repository": {
           "type": "string",
           "maxLength": 300
+        }
+      }
+    },
+    "browserCapability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "host", "checked_at", "probe_method", "summary"],
+      "properties": {
+        "status": {
+          "enum": ["available", "unavailable", "unverified"]
+        },
+        "host": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "checked_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "probe_method": {
+          "enum": [
+            "runtime-tool-inventory",
+            "successful-browser-round-trip",
+            "runtime-tool-unavailable",
+            "runtime-not-verifiable"
+          ]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        }
+      }
+    },
+    "executionProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "activation",
+        "requested_at",
+        "navigation_policy",
+        "server_policy",
+        "browser_capability"
+      ],
+      "properties": {
+        "name": {
+          "const": "visual-browser"
+        },
+        "activation": {
+          "const": "explicit-user-request"
+        },
+        "requested_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "navigation_policy": {
+          "const": "ui-interactions-after-entry"
+        },
+        "server_policy": {
+          "const": "observe-only"
+        },
+        "browser_capability": {
+          "$ref": "#/$defs/browserCapability"
         }
       }
     },
@@ -100,6 +182,9 @@
         "human_learning_log": {
           "type": "string",
           "maxLength": 500
+        },
+        "execution_profile": {
+          "$ref": "#/$defs/executionProfile"
         },
         "sensitive_data_redacted": {
           "const": true

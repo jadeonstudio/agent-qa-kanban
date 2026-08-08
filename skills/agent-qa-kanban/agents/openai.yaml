@@ -1,4 +1,4 @@
 interface:
   display_name: "Agent QA Kanban"
   short_description: "Run evidence-led QA with a live kanban board"
-  default_prompt: "Use $agent-qa-kanban to run evidence-led QA and keep an inline kanban board updated."
+  default_prompt: "Use $agent-qa-kanban to audit this change and keep the canonical QA board current. Only enable visual-browser QA when I explicitly request it."

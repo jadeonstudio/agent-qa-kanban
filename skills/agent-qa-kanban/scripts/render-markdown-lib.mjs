@@ -13,6 +13,12 @@ export function renderMarkdownBoard(board) {
     `- Run: ${escapeMarkdown(board.board.run_id)}`,
     `- Mode: ${escapeMarkdown(board.board.mode)}`,
     `- QA lane: ${escapeMarkdown(board.board.lane)}`,
+    ...(board.board.execution_profile
+      ? [
+          `- Execution profile: ${escapeMarkdown(board.board.execution_profile.name)} (${escapeMarkdown(board.board.execution_profile.activation)})`,
+          `- Browser capability: ${escapeMarkdown(board.board.execution_profile.browser_capability.status)} on ${escapeMarkdown(board.board.execution_profile.browser_capability.host)}`,
+        ]
+      : []),
     `- Updated: ${escapeMarkdown(board.board.updated_at)}`,
     `- Total: ${summary.total}; active: ${summary.active}; done: ${summary.done}; blocked: ${summary.blocked}`,
     "",

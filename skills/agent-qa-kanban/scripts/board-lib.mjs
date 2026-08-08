@@ -9,7 +9,20 @@ export const BOARD_MODES = [
   "fix-with-approval",
   "plan-only",
 ];
+export const BOARD_SCHEMA_VERSIONS = ["1.0", "1.1"];
 export const QA_LANES = ["regression", "exploration", "dual-lane"];
+export const EXECUTION_PROFILES = ["visual-browser"];
+export const BROWSER_CAPABILITY_STATUSES = [
+  "available",
+  "unavailable",
+  "unverified",
+];
+export const BROWSER_PROBE_METHODS = [
+  "runtime-tool-inventory",
+  "successful-browser-round-trip",
+  "runtime-tool-unavailable",
+  "runtime-not-verifiable",
+];
 export const CARD_STATUSES = [
   "queued",
   "investigating",
@@ -109,8 +122,13 @@ export function collectBoardErrors(board) {
     ["schema_version", "board", "cards"],
     errors,
   );
-  validateConst(board.schema_version, "1.0", "$.schema_version", errors);
-  validateBoardMetadata(board.board, "$.board", errors);
+  validateEnum(
+    board.schema_version,
+    BOARD_SCHEMA_VERSIONS,
+    "$.schema_version",
+    errors,
+  );
+  validateBoardMetadata(board.board, "$.board", board.schema_version, errors);
 
   if (!Array.isArray(board.cards)) {
     errors.push("$.cards must be an array");
@@ -143,6 +161,8 @@ export function collectBoardErrors(board) {
       }
     }
   }
+
+  validateExecutionProfileInvariants(board, errors);
 
   return errors;
 }
@@ -282,6 +302,12 @@ export function summarizeBoard(board) {
   };
 }
 
+// Visual/browser QA는 명시적 profile 필드가 있을 때만 활성화된 것으로 본다.
+// 과거 1.0 보드의 browser check는 호환성을 위해 그대로 읽되 opt-in으로 승격하지 않는다.
+export function isVisualBrowserProfile(boardDocument) {
+  return boardDocument?.board?.execution_profile?.name === "visual-browser";
+}
+
 // JSON을 script 태그에 안전하게 넣도록 태그 종료와 특수 문자를 이스케이프한다.
 export function serializeForHtmlScript(value) {
   return JSON.stringify(value)
@@ -304,7 +330,7 @@ export function buildFollowUpPayload(card) {
   };
 }
 
-function validateBoardMetadata(board, path, errors) {
+function validateBoardMetadata(board, path, schemaVersion, errors) {
   if (!isRecord(board)) {
     errors.push(`${path} must be an object`);
     return;
@@ -326,7 +352,7 @@ function validateBoardMetadata(board, path, errors) {
     board,
     path,
     requiredKeys,
-    [...requiredKeys, "goal", "human_learning_log"],
+    [...requiredKeys, "goal", "human_learning_log", "execution_profile"],
     errors,
   );
   validateId(board.id, `${path}.id`, errors);
@@ -340,6 +366,18 @@ function validateBoardMetadata(board, path, errors) {
   });
   validateEnum(board.mode, BOARD_MODES, `${path}.mode`, errors);
   validateEnum(board.lane, QA_LANES, `${path}.lane`, errors);
+  if (board.execution_profile !== undefined) {
+    if (schemaVersion !== "1.1") {
+      errors.push(
+        `${path}.execution_profile requires schema_version 1.1`,
+      );
+    }
+    validateExecutionProfile(
+      board.execution_profile,
+      `${path}.execution_profile`,
+      errors,
+    );
+  }
   validateTimestamp(board.created_at, `${path}.created_at`, errors);
   validateTimestamp(board.updated_at, `${path}.updated_at`, errors);
   if (
@@ -368,6 +406,102 @@ function validateBoardMetadata(board, path, errors) {
     `${path}.sensitive_data_redacted`,
     errors,
   );
+}
+
+function validateExecutionProfile(profile, path, errors) {
+  if (!isRecord(profile)) {
+    errors.push(`${path} must be an object`);
+    return;
+  }
+  const requiredKeys = [
+    "name",
+    "activation",
+    "requested_at",
+    "navigation_policy",
+    "server_policy",
+    "browser_capability",
+  ];
+  validateExactObject(profile, path, requiredKeys, requiredKeys, errors);
+  validateEnum(profile.name, EXECUTION_PROFILES, `${path}.name`, errors);
+  validateConst(
+    profile.activation,
+    "explicit-user-request",
+    `${path}.activation`,
+    errors,
+  );
+  validateTimestamp(profile.requested_at, `${path}.requested_at`, errors);
+  validateConst(
+    profile.navigation_policy,
+    "ui-interactions-after-entry",
+    `${path}.navigation_policy`,
+    errors,
+  );
+  validateConst(
+    profile.server_policy,
+    "observe-only",
+    `${path}.server_policy`,
+    errors,
+  );
+  validateBrowserCapability(
+    profile.browser_capability,
+    `${path}.browser_capability`,
+    errors,
+  );
+}
+
+function validateBrowserCapability(capability, path, errors) {
+  if (!isRecord(capability)) {
+    errors.push(`${path} must be an object`);
+    return;
+  }
+  const requiredKeys = [
+    "status",
+    "host",
+    "checked_at",
+    "probe_method",
+    "summary",
+  ];
+  validateExactObject(capability, path, requiredKeys, requiredKeys, errors);
+  validateEnum(
+    capability.status,
+    BROWSER_CAPABILITY_STATUSES,
+    `${path}.status`,
+    errors,
+  );
+  validateString(capability.host, `${path}.host`, errors, {
+    min: 1,
+    max: 120,
+  });
+  validateTimestamp(capability.checked_at, `${path}.checked_at`, errors);
+  validateEnum(
+    capability.probe_method,
+    BROWSER_PROBE_METHODS,
+    `${path}.probe_method`,
+    errors,
+  );
+  validateString(capability.summary, `${path}.summary`, errors, {
+    min: 1,
+    max: 1000,
+  });
+
+  const validMethods = {
+    available: new Set([
+      "runtime-tool-inventory",
+      "successful-browser-round-trip",
+    ]),
+    unavailable: new Set(["runtime-tool-unavailable"]),
+    unverified: new Set(["runtime-not-verifiable"]),
+  };
+  if (
+    typeof capability.status === "string" &&
+    typeof capability.probe_method === "string" &&
+    validMethods[capability.status] &&
+    !validMethods[capability.status].has(capability.probe_method)
+  ) {
+    errors.push(
+      `${path}.probe_method cannot support status ${capability.status}`,
+    );
+  }
 }
 
 function validateProject(project, path, errors) {
@@ -982,6 +1116,231 @@ function validateCardInvariants(card, path, board, errors) {
       );
     }
   }
+}
+
+function validateExecutionProfileInvariants(boardDocument, errors) {
+  if (!isVisualBrowserProfile(boardDocument)) {
+    return;
+  }
+
+  const metadata = boardDocument.board;
+  const profile = metadata.execution_profile;
+  const capability = profile.browser_capability;
+  const visualCards = Array.isArray(boardDocument.cards)
+    ? boardDocument.cards.filter(isVisualCard)
+    : [];
+
+  if (visualCards.length === 0) {
+    errors.push(
+      "$.board.execution_profile requires at least one card with a browser verification check",
+    );
+  }
+  if (!visualCards.some((card) => card?.kind === "flow")) {
+    errors.push(
+      "$.board.execution_profile requires a flow card created before visual execution",
+    );
+  }
+
+  for (const [field, value] of [
+    ["requested_at", profile.requested_at],
+    ["browser_capability.checked_at", capability?.checked_at],
+  ]) {
+    if (
+      isTimestamp(value) &&
+      isTimestamp(metadata.updated_at) &&
+      Date.parse(value) > Date.parse(metadata.updated_at)
+    ) {
+      errors.push(
+        `$.board.execution_profile.${field} must not be newer than board.updated_at`,
+      );
+    }
+  }
+  if (
+    isTimestamp(profile.requested_at) &&
+    isTimestamp(capability?.checked_at) &&
+    Date.parse(capability.checked_at) < Date.parse(profile.requested_at)
+  ) {
+    errors.push(
+      "$.board.execution_profile.browser_capability.checked_at must not precede requested_at",
+    );
+  }
+
+  collectSensitiveStringErrors(
+    profile,
+    "$.board.execution_profile",
+    errors,
+  );
+
+  for (const [index, card] of boardDocument.cards.entries()) {
+    if (!isVisualCard(card)) {
+      continue;
+    }
+    const path = `$.cards[${index}]`;
+    const cardEvidence = Array.isArray(card.evidence) ? card.evidence : [];
+    const cardChecks = Array.isArray(card.verification?.checks)
+      ? card.verification.checks
+      : [];
+    if (!isRecord(card.reproduction)) {
+      errors.push(
+        `${path}.reproduction is required for visual scenario and finding cards`,
+      );
+    }
+    collectSensitiveStringErrors(card, path, errors);
+    validateVisualEvidenceReferences(card, path, errors);
+
+    if (capability?.status !== "available") {
+      if (card.status !== "blocked") {
+        errors.push(
+          `${path}.status must be blocked when browser capability is ${capability?.status ?? "invalid"}`,
+        );
+      }
+      if (card.resolution !== "blocked") {
+        errors.push(
+          `${path}.resolution must be blocked when browser capability is not available`,
+        );
+      }
+      if (card.classification !== "environment-blocker") {
+        errors.push(
+          `${path}.classification must be environment-blocker when browser capability is not available`,
+        );
+      }
+      if (card.blocker?.kind !== "environment") {
+        errors.push(
+          `${path}.blocker.kind must be environment when browser capability is not available`,
+        );
+      }
+      const browserChecks = cardChecks.filter(
+        (check) => check?.type === "browser",
+      );
+      if (browserChecks.some((check) => check.status !== "blocked")) {
+        errors.push(
+          `${path} browser checks must be blocked when browser capability is not available`,
+        );
+      }
+      if (
+        cardEvidence.some((item) =>
+          ["browser-observation", "screenshot-ref"].includes(item?.type),
+        )
+      ) {
+        errors.push(
+          `${path}.evidence must not claim browser observations or screenshots without available capability`,
+        );
+      }
+    }
+
+    if (card.status === "done" && card.resolution === "resolved") {
+      const evidenceById = new Map(
+        cardEvidence.filter(isRecord).map((item) => [item.id, item]),
+      );
+      const passingBrowserChecks = cardChecks.filter(
+        (check) => check?.type === "browser" && check?.status === "passed",
+      );
+      if (passingBrowserChecks.length === 0) {
+        errors.push(`${path} requires a passing browser check for visual done`);
+      }
+      const linkedVisualEvidence = passingBrowserChecks.flatMap((check) =>
+        Array.isArray(check.evidence_refs)
+          ? check.evidence_refs
+              .map((id) => evidenceById.get(id))
+              .filter((item) =>
+                ["browser-observation", "screenshot-ref"].includes(item?.type),
+              )
+          : [],
+      );
+      if (linkedVisualEvidence.length === 0) {
+        errors.push(
+          `${path} requires browser or screenshot evidence linked from the passing browser check`,
+        );
+      }
+    }
+  }
+}
+
+function isVisualCard(card) {
+  return Boolean(
+    Array.isArray(card?.verification?.checks) &&
+      card.verification.checks.some((check) => check?.type === "browser"),
+  );
+}
+
+function validateVisualEvidenceReferences(card, path, errors) {
+  if (!Array.isArray(card.evidence)) {
+    return;
+  }
+  for (const [index, item] of card.evidence.entries()) {
+    if (!isRecord(item)) {
+      continue;
+    }
+    const evidencePath = `${path}.evidence[${index}]`;
+    if (item.type === "screenshot-ref" && !item.ref) {
+      errors.push(`${evidencePath}.ref is required for visual screenshots`);
+      continue;
+    }
+    if (
+      typeof item.ref === "string" &&
+      !item.ref.startsWith("https://") &&
+      !item.ref.startsWith("visual/")
+    ) {
+      errors.push(
+        `${evidencePath}.ref must stay under the run visual/ directory`,
+      );
+    }
+    if (
+      item.type === "screenshot-ref" &&
+      typeof item.ref === "string" &&
+      !item.ref.startsWith("visual/screenshots/")
+    ) {
+      errors.push(
+        `${evidencePath}.ref must stay under visual/screenshots/`,
+      );
+    }
+  }
+}
+
+function collectSensitiveStringErrors(value, path, errors) {
+  if (typeof value === "string") {
+    const findings = detectSensitiveText(value);
+    for (const finding of findings) {
+      errors.push(`${path} contains unredacted ${finding}`);
+    }
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) =>
+      collectSensitiveStringErrors(item, `${path}[${index}]`, errors),
+    );
+    return;
+  }
+  if (!isRecord(value)) {
+    return;
+  }
+  for (const [key, child] of Object.entries(value)) {
+    collectSensitiveStringErrors(child, `${path}.${key}`, errors);
+  }
+}
+
+function detectSensitiveText(value) {
+  const text = String(value);
+  const findings = [];
+  if (/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(text)) {
+    findings.push("email address");
+  }
+  if (
+    /\b01[016789]\d{7,8}\b/.test(text.replace(/[ .()-]/g, "")) ||
+    /(?:^|\D)(?:0\d{1,2})[-. ]\d{3,4}[-. ]\d{4}(?:\D|$)/.test(text)
+  ) {
+    findings.push("phone number");
+  }
+  const secretPattern =
+    /(?:authorization\s*:\s*bearer|set-cookie\s*:|cookie\s*:|(?:password|passwd|api[_-]?key|access[_-]?token|refresh[_-]?token|session[_-]?token)\s*[=:])\s*([^\s,;]+)/gi;
+  for (const match of text.matchAll(secretPattern)) {
+    const candidate = String(match[1] ?? "");
+    if (!/^(?:\[?redacted\]?|<redacted>|\*{3,})$/i.test(candidate)) {
+      findings.push("credential, cookie, or token value");
+      break;
+    }
+  }
+  return findings;
 }
 
 function hasCancellationReason(card) {

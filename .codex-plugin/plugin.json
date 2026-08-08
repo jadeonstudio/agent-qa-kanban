@@ -1,0 +1,35 @@
+{
+  "name": "agent-qa-kanban",
+  "version": "0.1.0",
+  "description": "Evidence-led QA with a canonical kanban, opt-in visual browser testing, and explicit human feedback learning.",
+  "author": { "name": "jadeonstudio", "url": "https://github.com/jadeonstudio" },
+  "homepage": "https://github.com/jadeonstudio/agent-qa-kanban",
+  "repository": "https://github.com/jadeonstudio/agent-qa-kanban",
+  "license": "MIT",
+  "keywords": ["codex", "claude-code", "grok", "agent-skills", "qa", "kanban", "visual-testing"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Agent QA Kanban",
+    "shortDescription": "Evidence-led QA with a canonical live kanban",
+    "longDescription": "Run regression and exploratory QA, keep every scenario and finding in one canonical qa-board.json, optionally run explicitly requested visual browser QA, and learn only from explicit redacted human feedback.",
+    "developerName": "jadeonstudio",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Regression and exploratory QA",
+      "Canonical QA kanban reporting",
+      "Opt-in visual browser QA",
+      "Explicit human feedback learning"
+    ],
+    "websiteURL": "https://github.com/jadeonstudio/agent-qa-kanban",
+    "defaultPrompt": [
+      "Use $agent-qa-kanban to audit this change and keep the QA board current.",
+      "Use $agent-qa-kanban in audit-only dual-lane mode on this flow.",
+      "Use $agent-qa-kanban with explicitly requested visual-browser QA on this flow."
+    ],
+    "brandColor": "#0F766E",
+    "screenshots": [
+      "./assets/qa-kanban-example.png",
+      "./assets/qa-kanban-detail-dialog.png"
+    ]
+  }
+}

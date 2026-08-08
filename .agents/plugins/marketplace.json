@@ -1,0 +1,20 @@
+{
+  "name": "agent-qa-kanban",
+  "interface": {
+    "displayName": "Agent QA Kanban"
+  },
+  "plugins": [
+    {
+      "name": "agent-qa-kanban",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

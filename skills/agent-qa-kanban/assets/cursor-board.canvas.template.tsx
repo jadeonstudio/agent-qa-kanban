@@ -92,6 +92,11 @@ type QaBoardDocument = {
     updated_at: string;
     locale: string;
     goal?: string;
+    execution_profile?: {
+      name: string;
+      activation: string;
+      browser_capability: { status: string; host: string };
+    };
   };
   cards: QaCard[];
 };
@@ -302,6 +307,9 @@ export default function QaKanbanCanvas() {
         <Text tone="secondary" size="small">
           {boardDoc.board.project.name} · {boardDoc.board.run_id} ·{" "}
           {boardDoc.board.mode} · {boardDoc.board.lane}
+          {boardDoc.board.execution_profile
+            ? ` · ${boardDoc.board.execution_profile.name} · ${boardDoc.board.execution_profile.browser_capability.status}`
+            : ""}
         </Text>
         <Text tone="tertiary" size="small">
           {copy.updated}: {boardDoc.board.updated_at} · {copy.snapshot}
